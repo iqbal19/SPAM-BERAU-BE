@@ -21,8 +21,8 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Desa" (
-    "id" SERIAL NOT NULL,
-    "kecamatan_id" INTEGER NOT NULL,
+    "id" BIGSERIAL NOT NULL,
+    "kecamatan_id" BIGINT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "is_delete" BOOLEAN NOT NULL DEFAULT false,
@@ -53,7 +53,7 @@ CREATE TABLE "Spam" (
 CREATE TABLE "SpamCakupan" (
     "id" SERIAL NOT NULL,
     "spamId" INTEGER NOT NULL,
-    "desaId" INTEGER NOT NULL,
+    "desaId" BIGINT NOT NULL,
 
     CONSTRAINT "SpamCakupan_pkey" PRIMARY KEY ("id")
 );

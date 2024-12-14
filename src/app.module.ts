@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { SpamModule } from './spam/spam.module';
+import { MasterModule } from './master/master.module';
 import { AppService } from './app.service';
 
 @Module({
@@ -11,7 +12,8 @@ import { AppService } from './app.service';
 		PrismaModule,
 		AuthModule,
 		UserModule,
-		SpamModule
+		SpamModule,
+		MasterModule
 	],
 	providers: [AppService],
   exports: [AppService]

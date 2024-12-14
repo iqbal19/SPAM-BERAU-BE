@@ -22,7 +22,7 @@ export class AuthService {
 			return {}
 		}
 
-		const access_token = await this.createAccessToken(user)
+		const access_token = await this.createAccessToken(user.id)
 		const refresh_token = await this.createRefreshToken(user)
 		return { access_token, refresh_token }
 	}
@@ -31,7 +31,7 @@ export class AuthService {
 		const { refresh_token } = refreshTokenDto
 		const payload = await this.decodeToken(refresh_token)
 
-    const access_token = await this.createAccessToken(payload.user);
+    const access_token = await this.createAccessToken(payload?.jid);
 
     return  { access_token };
 	}
@@ -48,9 +48,9 @@ export class AuthService {
 		}
 	}
 
-	async createAccessToken(user: User): Promise<string> {
+	async createAccessToken(id: string): Promise<string> {
 		const payload = {
-			sub: user.id
+			sub: id
 		}
 		const access_token = await this.jwtService.signAsync(payload)
 		return access_token

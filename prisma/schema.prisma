@@ -26,8 +26,8 @@ model User {
 }
 
 model Desa {
-  id            Int      @default(autoincrement()) @id
-  kecamatan_id  Int
+  id            BigInt      @default(autoincrement()) @id
+  kecamatan_id  BigInt
   name          String
   description   String     
   is_delete     Boolean     @default(false)
@@ -54,11 +54,11 @@ model Spam {
 }
 
 model SpamCakupan {
-  id                Int      @default(autoincrement()) @id
+  id                Int         @default(autoincrement()) @id
   spamId            Int
-  desaId            Int
-  spam              Spam        @relation(fields: [spamId], references: [id])
-  desa              Desa        @relation(fields: [desaId], references: [id])
+  desaId            BigInt
+  spam              Spam        @relation(fields: [spamId], references:[id])
+  desa              Desa        @relation(fields: [desaId], references:[id])
 }
 
 enum Status {

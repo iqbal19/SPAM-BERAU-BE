@@ -64,7 +64,6 @@ export class SpamService {
 	}
 
 	async findSpamById(id: number): Promise<object> {
-		console.log(id)
     const titik = await this.dbService.spam.findUnique({
       where: { id: +id },
 			include:{
@@ -76,8 +75,30 @@ export class SpamService {
 			}
     });
 
+		const cakupans = titik?.SpamCakupan.map((item) => {
+			return {
+				idDesa: item?.desa?.id.toString(),
+				namaDesa: item?.desa?.name
+			}
+		})
+
+		const newTitik = {
+			id: titik.id,
+			lat: titik.lat,
+			long: titik.long,
+			nama: titik.nama,
+			alamat: titik.alamat,
+			kapasitas: titik.kapasitas,
+			sr: titik.sr,
+			pengelola: titik.pengelola,
+			riwayat_aktivitas: titik.pengelola,
+			createdAt: titik.createdAt,
+			updatedAt: titik.updatedAt,
+			cakupans
+		}
+
 		if (!titik) return null
-		return titik
+		return newTitik
 	}
 
 	async updateSpam(id: number, spamDto: SpamDto): Promise<string> {
@@ -95,7 +116,12 @@ export class SpamService {
 				kapasitas,
         pengelola,
         sr,
-        riwayat_aktivitas
+        riwayat_aktivitas,
+				SpamCakupan: {
+					create: cakupan.map((m) => ({
+						desaId: m, 
+					})),
+				},
 			}
 		})
 		if (!updPengurus) 'Gagal mengedit data'
