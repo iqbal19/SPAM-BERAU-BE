@@ -47,7 +47,6 @@ export class SpamController {
 		}
 	}
 
-  @UseGuards(JwtGuard)
   @Get('/:id')
   async getDetailSpam(@Param('id') id: number, @Res() res: Response) {
     try {

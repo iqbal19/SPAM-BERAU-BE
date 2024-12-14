@@ -129,9 +129,12 @@ export class SpamService {
 	}
 
 	async deleteSpam(id: number): Promise<string> {
-		const delPengurus = await this.dbService.spam.delete({
+		const delPengurus = await this.dbService.spam.update({
 			where: {
-				id: id
+				id: +id
+			},
+			data: {
+				deletedAt: new Date()
 			}
 		})
 		if (!delPengurus) 'Gagal menghapus data'

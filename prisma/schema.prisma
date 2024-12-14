@@ -22,7 +22,7 @@ model User {
   status        Status    @default(AKTIF)
   role          Role      @default(ADMIN)  
   createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  updatedAt     DateTime  @default(now())
 }
 
 model Desa {
@@ -32,7 +32,7 @@ model Desa {
   description   String     
   is_delete     Boolean     @default(false)
   createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  updatedAt     DateTime    @default(now())
 
   SpamCakupan   SpamCakupan[]
 }
@@ -47,8 +47,9 @@ model Spam {
   sr                Decimal
   pengelola         String
   riwayat_aktivitas String      @db.Text()
+  deletedAt         DateTime?
   createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  updatedAt         DateTime    @default(now())
 
   SpamCakupan       SpamCakupan[]
 }
