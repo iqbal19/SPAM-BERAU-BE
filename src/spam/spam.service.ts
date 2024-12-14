@@ -41,7 +41,6 @@ export class SpamService {
 
 	async createSpam(spamDto: SpamDto): Promise<string>  {
 		const { nama, alamat, lat, long, kapasitas, pengelola, sr, riwayat_aktivitas, cakupan } = spamDto
-
 		const newSpam = await this.dbService.spam.create({
 			data: {
 				nama,
@@ -52,33 +51,33 @@ export class SpamService {
         pengelola,
         sr,
         riwayat_aktivitas,
-        cakupan
+				SpamCakupan: {
+					create: cakupan.map((m) => ({
+						desaId: m, 
+					})),
+				},
 			}
 		})
-		if (!newSpam) "Gagal menambah data"
+
+		if(!newSpam) return "Gagal menambah data"
 		return null
 	}
 
 	async findSpamById(id: number): Promise<object> {
-    let desaCakupan = []
+		console.log(id)
     const titik = await this.dbService.spam.findUnique({
       where: { id: +id },
+			include:{
+				SpamCakupan: {
+					include: { 
+						desa: true
+					}
+				}
+			}
     });
-    if (titik?.cakupan) {
-      const desaIds = titik.cakupan as number[]; 
-      desaCakupan = await this.dbService.desa.findMany({
-        where: {
-          id: { in: desaIds },
-        },
-      });
-    }
 
-    const titikWithCakupan = {
-      ...titik,
-      cakupan: desaCakupan, 
-    };
 		if (!titik) return null
-		return titikWithCakupan
+		return titik
 	}
 
 	async updateSpam(id: number, spamDto: SpamDto): Promise<string> {
@@ -96,8 +95,7 @@ export class SpamService {
 				kapasitas,
         pengelola,
         sr,
-        riwayat_aktivitas,
-        cakupan
+        riwayat_aktivitas
 			}
 		})
 		if (!updPengurus) 'Gagal mengedit data'

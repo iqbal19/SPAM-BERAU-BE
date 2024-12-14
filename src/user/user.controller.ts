@@ -6,7 +6,7 @@ import { JwtGuard } from 'src/guard/jwt.guard'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { AppService } from 'src/app.service'
 
-@UseGuards(JwtGuard)
+// @UseGuards(JwtGuard)
 @Controller('v1/api/user')
 export class UserController {
 	constructor(

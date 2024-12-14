@@ -26,28 +26,39 @@ model User {
 }
 
 model Desa {
-  id            BigInt     @default(autoincrement()) @id
-  kecamatan_id  BigInt
+  id            Int      @default(autoincrement()) @id
+  kecamatan_id  Int
   name          String
   description   String     
-  is_delete     Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  is_delete     Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  SpamCakupan   SpamCakupan[]
 }
 
 model Spam {
-  id                BigInt      @default(autoincrement()) @id
-  lat               BigInt
-  long              BigInt
+  id                Int      @default(autoincrement()) @id
+  lat               Decimal
+  long              Decimal
   nama              String
   alamat            String
   kapasitas         Decimal
   sr                Decimal
   pengelola         String
   riwayat_aktivitas String      @db.Text()
-  cakupan           Json
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+
+  SpamCakupan       SpamCakupan[]
+}
+
+model SpamCakupan {
+  id                Int      @default(autoincrement()) @id
+  spamId            Int
+  desaId            Int
+  spam              Spam        @relation(fields: [spamId], references: [id])
+  desa              Desa        @relation(fields: [desaId], references: [id])
 }
 
 enum Status {

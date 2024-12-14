@@ -51,11 +51,12 @@ export class SpamController {
   @Get('/:id')
   async getDetailSpam(@Param('id') id: number, @Res() res: Response) {
     try {
+			console.log(id)
 			const spam = await this.spamService.findSpamById(id)
 			if (!spam) return this.appService.responseError(res, 400, 'data tidak ditemukan');
 			return this.appService.responseSuccess(res, HttpStatus.OK, spam);
 		} catch (error) {
-			return this.appService.responseError(res, 400, 'terjadi kesalahan');
+			return this.appService.responseError(res, 400, error);
 		}
   }
 

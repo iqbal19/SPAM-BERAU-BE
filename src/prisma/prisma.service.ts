@@ -3,6 +3,11 @@ import { PrismaClient } from '@prisma/client'
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
+	// constructor() {
+  //   super({
+  //     log: ['query', 'info', 'warn', 'error'],
+  //   });
+  // }
 	private _refreshToken: any
 	public get refreshToken(): any {
 		return this._refreshToken
