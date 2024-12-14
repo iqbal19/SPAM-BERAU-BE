@@ -12,7 +12,7 @@ export class SpamController {
 		private readonly appService: AppService
 	) {}
 
-  @Get()
+  @Get('/peta')
 	async spamsPetaFind(@Res() res: Response) {
 		try {
 			const spams = await this.spamService.findAllSpamPeta()
