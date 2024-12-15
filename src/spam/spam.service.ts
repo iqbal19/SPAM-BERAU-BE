@@ -127,6 +127,7 @@ export class SpamService {
         sr,
         riwayat_aktivitas,
 				SpamCakupan: {
+					deleteMany: {},
 					create: cakupan.map((m) => ({
 						desaId: m, 
 					})),
