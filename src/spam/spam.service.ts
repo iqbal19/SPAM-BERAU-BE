@@ -15,7 +15,8 @@ export class SpamService {
 	async findAllSpam(): Promise<object> {
 		const spam = await this.dbService.spam.findMany({
 			orderBy: {
-				createdAt: 'asc'
+				createdAt: 'asc',
+				deletedAt: null
 			}
 		})
 		if (!spam) return null
@@ -25,7 +26,8 @@ export class SpamService {
   async findAllSpamPeta(): Promise<object> {
     const spam = await this.dbService.spam.findMany({
 			orderBy: {
-				createdAt: 'asc'
+				createdAt: 'asc',
+				deletedAt: null
 			}
 		})
     const spamPeta = spam.map((item) => {
@@ -65,7 +67,10 @@ export class SpamService {
 
 	async findSpamById(id: number): Promise<object> {
     const titik = await this.dbService.spam.findUnique({
-      where: { id: +id },
+      where: {
+				id: +id, 
+				deletedAt: null 
+			},
 			include:{
 				SpamCakupan: {
 					include: { 
