@@ -38,20 +38,27 @@ model Desa {
 }
 
 model Spam {
-  id                Int      @default(autoincrement()) @id
-  lat               Decimal
-  long              Decimal
-  nama              String
-  alamat            String
-  kapasitas         Decimal
-  sr                Decimal
-  pengelola         String
-  riwayat_aktivitas String      @db.Text()
-  deletedAt         DateTime?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @default(now())
+  id                  Int      @default(autoincrement()) @id
+  lat                 Decimal
+  long                Decimal
+  nama                String
+  alamat              String
+  kapasitas           Decimal
+  kapasitas_intake    Decimal?
+  kapasitas_produksi  Decimal?
+  sr                  Decimal
+  pengelola           String
+  riwayat_aktivitas   String      @db.Text()
+  sumber_air          String?
+  sumber_tenaga       String?
+  deletedAt           DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @default(now())
 
-  SpamCakupan       SpamCakupan[]
+  SpamCakupan         SpamCakupan[]
+  fotoSpam            FotoSpam?
+  rasioSpam           RasioSpam?
+  spamTitik           SpamTitik?
 }
 
 model SpamCakupan {
@@ -61,6 +68,54 @@ model SpamCakupan {
   spam              Spam        @relation(fields: [spamId], references:[id])
   desa              Desa        @relation(fields: [desaId], references:[id])
 }
+
+model SpamTitik {
+  id                Int         @default(autoincrement()) @id
+  spam              Spam?       @relation(fields: [spamId], references: [id])
+  spamId            Int?        @unique
+  lat_intake        Decimal
+  long_intake       Decimal
+  lat_wtp           Decimal
+  long_wtp          Decimal
+  lat_roservoir     Decimal
+  long_roservoir    Decimal
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @default(now())
+}
+
+model RasioSpam {
+  id                Int         @default(autoincrement()) @id
+  spam              Spam?       @relation(fields: [spamId], references: [id])
+  spamId            Int?        @unique
+  terlayani         Int
+  tidak_terlayani   Int
+  total_laki_laki   Int
+  total_peempuan    Int
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @default(now())
+}
+
+model FotoSpam {
+  id                    Int      @default(autoincrement()) @id
+  spam                  Spam?    @relation(fields: [spamId], references: [id])
+  spamId                Int?     @unique
+  foto_wtp              String?
+  foto_intake           String?
+  foto_roservoir        String?
+  foto_rumah_dosing     String?
+  foto_pompa_distibusi  String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @default(now())
+}
+
+model News {
+  id                    Int         @default(autoincrement()) @id
+  title                 String
+  description           String      @db.Text
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @default(now())
+}
+
 
 enum Status {
   AKTIF

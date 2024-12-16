@@ -1,3 +1,4 @@
+import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { PrismaModule } from './prisma/prisma.module';
@@ -6,14 +7,22 @@ import { UserModule } from './user/user.module';
 import { SpamModule } from './spam/spam.module';
 import { MasterModule } from './master/master.module';
 import { AppService } from './app.service';
+import { FileModule } from './file/file.module';
+import { NewsModule } from './news/news.module';
 
 @Module({
 	imports: [
+		ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'), // Direktori file upload
+      serveRoot: '/uploads', // URL akses ke folder uploads
+    }),
+		FileModule,
 		PrismaModule,
 		AuthModule,
 		UserModule,
 		SpamModule,
-		MasterModule
+		MasterModule,
+		NewsModule
 	],
 	providers: [AppService],
   exports: [AppService]
