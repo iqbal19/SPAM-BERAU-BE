@@ -69,6 +69,8 @@ export class FileService {
       case 'image/jpeg': return 'jpg';
       case 'image/png': return 'png';
       case 'application/pdf': return 'pdf';
+      case 'application/octet-stream': return 'shp';
+      case 'application/x-shapefile': return 'shp';
       default: return 'bin';
     }
   }

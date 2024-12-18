@@ -54,7 +54,6 @@ export class SpamController {
 			if (!spam) return this.appService.responseError(res, 400, 'data tidak ditemukan');
 			return this.appService.responseSuccess(res, HttpStatus.OK, spam);
 		} catch (error) {
-			console.log(error)
 			return this.appService.responseError(res, 400, error);
 		}
   }
@@ -82,4 +81,27 @@ export class SpamController {
 			return this.appService.responseError(res, 400, 'terjadi kesalahan');
 		}
 	}
+
+	@UseGuards(JwtGuard)
+	@Post('/shp-geojson')
+	async shpToGeojson( @Body() file: {fileBase64: string, spam: number[]}, @Res() res: Response ) {
+		try {
+			const errMsg = await this.spamService.createSpamShp(file)
+			if (!errMsg) return this.appService.responseSuccess(res, HttpStatus.OK, 'Berhasil mengahapus data');
+			return this.appService.responseError(res, 400, errMsg);
+		} catch (error) {
+			return this.appService.responseError(res, 400, error);
+		}
+	}
+
+	@Get('/file-shp/:id') //id Spam
+  async getFileShp(@Param('id') id: number, @Res() res: Response) {
+    try {
+			const fileShp = await this.spamService.getFileShpbySpam(id)
+			if (!fileShp) return this.appService.responseError(res, 400, 'data tidak ditemukan');
+			return this.appService.responseSuccess(res, HttpStatus.OK, fileShp);
+		} catch (error) {
+			return this.appService.responseError(res, 400, error);
+		}
+  }
 }

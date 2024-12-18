@@ -3,6 +3,10 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { SpamDto } from './dto/spam.dto'
 import { Spam } from '@prisma/client'
 import { FileService } from 'src/file/file.service'
+import * as shapefile from 'shapefile';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as AdmZip from 'adm-zip';
 
 @Injectable()
 export class SpamService {
@@ -310,5 +314,93 @@ export class SpamService {
 		})
 		if (!delPengurus) 'Gagal menghapus data'
     return null
+	}
+
+	async createSpamShp(file: {fileBase64: string, spam: number[]}): Promise<string> {
+		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
+		const newShpFile = await this.dbService.shpFile.create({
+			data: {
+				geojson
+			}
+		})
+
+		if (newShpFile) {
+			const newSpamShp = await this.dbService.spmShp.createMany({
+				data: file?.spam.map((m) => ({
+					spamId: +m, 
+					shpFileId: +newShpFile.id
+				}))
+			})
+			if (!newSpamShp) 'Gagal menambah data'
+			return null
+		} 
+		return 'Gagal menambah data'
+	}
+
+	async getFileShpbySpam(id: number): Promise<object> {
+		const file = await this.dbService.spmShp.findFirst({
+			where: {
+				id: +id
+			},
+			include: {
+				shpFile: true
+			}
+		})
+
+		if (file) {
+			const retFile = file.shpFile
+			return retFile
+		} else {
+			return null
+		}
+	}
+
+	async convertBase64ToGeoJSON(fileBase64: string): Promise<any> {
+		try {
+			// 1. Decode Base64 ke Buffer
+			const buffer = Buffer.from(fileBase64, 'base64');
+
+			// 2. Simpan buffer sebagai file sementara (ZIP atau SHP)
+			const tempPath = path.join(__dirname, 'temp_shapefile.zip');
+			fs.writeFileSync(tempPath, buffer);
+
+			// 3. Ekstrak file jika formatnya adalah ZIP
+			const extractedPath = path.join(__dirname, 'extracted');
+			fs.mkdirSync(extractedPath, { recursive: true });
+
+			const zip = new AdmZip(tempPath);
+			zip.extractAllTo(extractedPath, true);
+
+			// 4. Cari file SHP dan konversi ke GeoJSON
+			const shpFiles = fs.readdirSync(extractedPath).filter(file => file.endsWith('.shp'));
+			if (shpFiles.length === 0) {
+				throw new Error('No .shp file found in the uploaded data');
+			}
+
+			const shpFilePath = path.join(extractedPath, shpFiles[0]);
+
+			const geojsonFeatures = [];
+			await shapefile.open(shpFilePath)
+				.then(source =>
+					source.read().then(function log(result) {
+						if (result.done) return;
+						geojsonFeatures.push(result.value);
+						return source.read().then(log);
+					})
+				);
+
+			// 5. Hapus file sementara
+			fs.unlinkSync(tempPath);
+			fs.rmSync(extractedPath, { recursive: true, force: true });
+
+			// 6. Return data GeoJSON
+			return {
+				type: 'FeatureCollection',
+				features: geojsonFeatures,
+			};
+		} catch (error) {
+			console.error('Error processing Base64 Shapefile:', error.message);
+			throw new Error('Failed to process Shapefile data');
+		}
 	}
 }
