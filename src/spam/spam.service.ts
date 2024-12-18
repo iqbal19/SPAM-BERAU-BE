@@ -273,24 +273,6 @@ export class SpamService {
 						update: spam_titik
 					}
 				},
-				fotoSpam: {
-					upsert: {
-						create: {
-							foto_intake: fotoIntake,
-							foto_wtp: fotoWtp,
-							foto_pompa_distibusi: fotoPompa,
-							foto_rumah_dosing: fotoDosing,
-							foto_roservoir: fotoRoservoir
-						},
-						update: {
-							foto_intake: fotoIntake,
-							foto_wtp: fotoWtp,
-							foto_pompa_distibusi: fotoPompa,
-							foto_rumah_dosing: fotoDosing,
-							foto_roservoir: fotoRoservoir
-						}
-					}
-				},
 				SpamCakupan: {
 					deleteMany: {},
 					create: cakupan.map((m) => ({
@@ -299,6 +281,20 @@ export class SpamService {
 				},
 			}
 		})
+
+		await this.dbService.fotoSpam.update({
+			where: {
+				spamId: +id
+			},
+			data: {
+				foto_intake: fotoIntake,
+				foto_wtp: fotoWtp,
+				foto_pompa_distibusi: fotoPompa,
+				foto_rumah_dosing: fotoDosing,
+				foto_roservoir: fotoRoservoir
+			}
+		})
+
 		if (!updPengurus) 'Gagal mengedit data'
 		return null
 	}
@@ -337,6 +333,29 @@ export class SpamService {
 		return 'Gagal menambah data'
 	}
 
+	async updateSpamShp(id: number, file: {fileBase64: string}): Promise<string> {
+		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
+		const fileFirst = await this.dbService.spmShp.findFirst({
+			where: {
+				spamId: +id
+			}
+		})
+
+		if (fileFirst) {
+			const updFile = await this.dbService.shpFile.update({
+				where: {
+					id: +fileFirst.id
+				},
+				data: {
+					geojson
+				}
+			})
+			if(!updFile) "Gagal update data"
+			return null
+		}
+		return "data tidak ditemukan"
+	}
+
 	async getFileShpbySpam(id: number): Promise<object> {
 		const file = await this.dbService.spmShp.findFirst({
 			where: {
@@ -353,6 +372,28 @@ export class SpamService {
 		} else {
 			return null
 		}
+	}
+
+	async getFileShp(): Promise<object> {
+		const files = await this.dbService.spmShp.findMany({
+			select: {
+				spam: {
+					select: {
+						id: true,
+						nama: true
+					}
+				}
+			}
+		})
+		const mapReturnFile = files.map(item => {
+			return {
+				id: item.spam.id,
+				nama: item.spam.nama,
+				isFile: true
+			}
+		})
+		if(!files) "Gagal get data"
+		return mapReturnFile
 	}
 
 	async convertBase64ToGeoJSON(fileBase64: string): Promise<any> {
