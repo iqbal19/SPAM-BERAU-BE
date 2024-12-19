@@ -174,6 +174,10 @@ export class SpamService {
 		return newTitik
 	}
 
+	normalizePath(url: string): string {
+    return path.normalize(url.replace(/\\/g, '/'));
+	}
+
 	async updateSpam(id: number, spamDto: SpamDto): Promise<string> {
 		const { nama, alamat, lat, long, kapasitas, kapasitas_intake, kapasitas_produksi, sumber_air, sumber_tenaga, pengelola, sr, riwayat_aktivitas, cakupan, rasio_spam, spam_titik, foto_spam } = spamDto
 		const { foto_intake, foto_roservoir, foto_pompa_distibusi, foto_rumah_dosing, foto_wtp} = foto_spam
@@ -185,7 +189,7 @@ export class SpamService {
 		})
 		
 		let fotoWtp = ""
-    if (fotoSpam?.foto_wtp !== foto_wtp) {
+    if (this.normalizePath(fotoSpam?.foto_wtp) !== this.normalizePath(foto_wtp)) {
 			if (fotoSpam?.foto_wtp) {
 				const url = await this.fileService.updateFile(fotoSpam.foto_wtp, foto_wtp, "spam")
 				fotoWtp = `${this.baseUrl}/uploads/${url}`;
@@ -195,9 +199,9 @@ export class SpamService {
     } else {
 			fotoWtp = foto_wtp
     }
-
+		
     let fotoIntake = ""
-    if (fotoSpam?.foto_intake !== foto_intake) {
+    if (this.normalizePath(fotoSpam?.foto_intake) !== this.normalizePath(foto_intake)) {
 			if (fotoSpam?.foto_intake) {
 				const url = await this.fileService.updateFile(fotoSpam.foto_intake, foto_intake, "spam")
 				fotoIntake = `${this.baseUrl}/uploads/${url}`;
@@ -205,11 +209,11 @@ export class SpamService {
 				fotoIntake = await this.createUrlFoto(foto_intake)
 			}
     } else {
-      fotoIntake = foto_intake
+			fotoIntake = foto_intake
     }
-
+		
 		let fotoPompa = ""
-    if (fotoSpam?.foto_pompa_distibusi !== foto_pompa_distibusi) {
+    if (this.normalizePath(fotoSpam?.foto_pompa_distibusi) !== this.normalizePath(foto_pompa_distibusi)) {
 			if (fotoSpam?.foto_pompa_distibusi) {
 				const url = await this.fileService.updateFile(fotoSpam.foto_pompa_distibusi, foto_pompa_distibusi, "spam")
 				fotoPompa = `${this.baseUrl}/uploads/${url}`;
@@ -221,7 +225,7 @@ export class SpamService {
     }
 		
 		let fotoRoservoir = ""
-    if (fotoSpam?.foto_roservoir !== foto_roservoir) {
+    if (this.normalizePath(fotoSpam?.foto_roservoir) !== this.normalizePath(foto_roservoir)) {
 			if (fotoSpam?.foto_roservoir) {
 				const url = await this.fileService.updateFile(fotoSpam.foto_roservoir, foto_roservoir, "spam")
 				fotoRoservoir = `${this.baseUrl}/uploads/${url}`;
@@ -233,7 +237,7 @@ export class SpamService {
     }
 		
 		let fotoDosing = ""
-    if (fotoSpam?.foto_rumah_dosing !== foto_rumah_dosing) {
+    if (this.normalizePath(fotoSpam?.foto_rumah_dosing) !== this.normalizePath(foto_rumah_dosing)) {
 			if (fotoSpam?.foto_rumah_dosing) {
 				const url = await this.fileService.updateFile(fotoSpam.foto_rumah_dosing, foto_rumah_dosing, "spam")
 				fotoDosing = `${this.baseUrl}/uploads/${url}`;
@@ -241,7 +245,7 @@ export class SpamService {
 				fotoDosing = await this.createUrlFoto(foto_rumah_dosing)
 			}
     } else {
-      fotoDosing = foto_rumah_dosing
+			fotoDosing = foto_rumah_dosing
     }
 
     const updPengurus = await this.dbService.spam.update({
