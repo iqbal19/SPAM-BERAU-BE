@@ -318,38 +318,25 @@ export class SpamService {
 
 	async createSpamShp(file: {fileBase64: string, spam: number[]}): Promise<string> {
 		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
-		const newShpFile = await this.dbService.shpFile.create({
-			data: {
-				geojson
-			}
-		})
 
-		if (newShpFile) {
-			const newSpamShp = await this.dbService.spmShp.createMany({
-				data: file?.spam.map((m) => ({
-					spamId: +m, 
-					shpFileId: +newShpFile.id
-				}))
-			})
-			if (!newSpamShp) 'Gagal menambah data'
-			return null
-		} 
-		return 'Gagal menambah data'
+		const newSpamShp = await this.dbService.spmShp.createMany({
+			data: file?.spam.map((m) => ({
+				spamId: +m, 
+				geojson
+			}))
+		})
+		if (!newSpamShp) 'Gagal menambah data'
+		return null
 	}
 
 	async updateSpamShp(id: number, file: {fileBase64: string}): Promise<string> {
 		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
-		const newShpFile = await this.dbService.shpFile.create({
-			data: {
-				geojson
-			}
-		})
 		const updFile = await this.dbService.spmShp.updateMany({
 			where: {
 				spamId: +id
 			},
 			data: {
-				shpFileId: newShpFile.id
+				geojson
 			}
 		})
 
@@ -361,18 +348,22 @@ export class SpamService {
 		const file = await this.dbService.spmShp.findFirst({
 			where: {
 				spamId: +id
-			},
-			include: {
-				shpFile: true
 			}
 		})
 
-		if (file) {
-			const retFile = file.shpFile
-			return retFile
-		} else {
-			return null
-		}
+		if(!file) "Gagal get data"
+		return file
+	}
+
+	async deleteFileShp(id: number): Promise<string> {
+		const delFile = await this.dbService.spmShp.delete({
+			where: {
+				spamId: +id
+			}
+		})
+
+		if(!delFile) "Gagal delete data"
+		return null
 	}
 
 	async getFileShp(): Promise<object> {

@@ -59,7 +59,7 @@ model Spam {
   fotoSpam            FotoSpam?
   rasioSpam           RasioSpam?
   spamTitik           SpamTitik?
-  spamShp             SpmShp[]
+  spamShp             SpmShp?
 }
 
 model SpamCakupan {
@@ -117,20 +117,19 @@ model News {
   updatedAt             DateTime    @default(now())
 }
 
-model ShpFile {
-  id                    Int         @default(autoincrement()) @id
-  geojson               Json
-  spmShp                SpmShp[]
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @default(now())
-}
+// model ShpFile {
+//   id                    Int         @default(autoincrement()) @id
+//   geojson               Json
+//   spmShp                SpmShp[]
+//   createdAt             DateTime    @default(now())
+//   updatedAt             DateTime    @default(now())
+// }
 
 model SpmShp {
   id                    Int         @default(autoincrement()) @id
   spam                  Spam?       @relation(fields: [spamId], references: [id])
-  spamId                Int?           
-  shpFile               ShpFile?    @relation(fields: [shpFileId], references: [id])
-  shpFileId             Int?         
+  spamId                Int?        @unique
+  geojson               Json?                
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @default(now())
 }

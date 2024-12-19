@@ -128,4 +128,16 @@ export class SpamController {
 			return this.appService.responseError(res, 400, error);
 		}
 	}
+
+	@UseGuards(JwtGuard)
+	@Delete('/shp-geojson/:id')
+	async deleteShpGeojson(@Param('id') id: number, @Res() res: Response ) {
+		try {
+			const errMsg = await this.spamService.deleteFileShp(id)
+			if (!errMsg) return this.appService.responseSuccess(res, HttpStatus.OK, 'Berhasil menghapus data');
+			return this.appService.responseError(res, 400, errMsg);
+		} catch (error) {
+			return this.appService.responseError(res, 400, error);
+		}
+	}
 }
