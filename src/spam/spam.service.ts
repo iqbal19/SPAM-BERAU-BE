@@ -402,11 +402,13 @@ export class SpamService {
 			const buffer = Buffer.from(fileBase64, 'base64');
 
 			// 2. Simpan buffer sebagai file sementara (ZIP atau SHP)
-			const tempPath = path.join(__dirname, 'temp_shapefile.zip');
+			// const tempPath = path.join(__dirname, 'src', 'uploads', 'temp_shapefile.zip');
+			const tempPath = path.join(process.cwd(), 'uploads', 'temp_shapefile.zip');
 			fs.writeFileSync(tempPath, buffer);
 
 			// 3. Ekstrak file jika formatnya adalah ZIP
-			const extractedPath = path.join(__dirname, 'extracted');
+			// const extractedPath = path.join(__dirname, 'src', 'uploads', 'extracted');
+			const extractedPath = path.join(process.cwd(), 'uploads', 'extracted');
 			fs.mkdirSync(extractedPath, { recursive: true });
 
 			const zip = new AdmZip(tempPath);
