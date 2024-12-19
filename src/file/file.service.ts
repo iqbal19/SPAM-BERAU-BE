@@ -59,7 +59,7 @@ export class FileService {
       if (fs.existsSync(absolutePath)) {
         fs.unlinkSync(absolutePath);
       } else {
-        throw new HttpException('File not found', HttpStatus.NOT_FOUND);
+        return
       }
     }
   }
