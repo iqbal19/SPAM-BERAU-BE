@@ -335,31 +335,28 @@ export class SpamService {
 
 	async updateSpamShp(id: number, file: {fileBase64: string}): Promise<string> {
 		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
-		const fileFirst = await this.dbService.spmShp.findFirst({
+		const newShpFile = await this.dbService.shpFile.create({
+			data: {
+				geojson
+			}
+		})
+		const updFile = await this.dbService.spmShp.updateMany({
 			where: {
 				spamId: +id
+			},
+			data: {
+				shpFileId: newShpFile.id
 			}
 		})
 
-		if (fileFirst) {
-			const updFile = await this.dbService.shpFile.update({
-				where: {
-					id: +fileFirst.id
-				},
-				data: {
-					geojson
-				}
-			})
-			if(!updFile) "Gagal update data"
-			return null
-		}
-		return "data tidak ditemukan"
+		if(!updFile) "Gagal update data"
+		return null
 	}
 
 	async getFileShpbySpam(id: number): Promise<object> {
 		const file = await this.dbService.spmShp.findFirst({
 			where: {
-				id: +id
+				spamId: +id
 			},
 			include: {
 				shpFile: true
