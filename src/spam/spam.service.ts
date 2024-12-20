@@ -317,16 +317,27 @@ export class SpamService {
 	}
 
 	async createSpamShp(file: {fileBase64: string, spam: number[]}): Promise<string> {
-		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
+		const spamSph = await this.dbService.spmShp.findMany({
+			where: {
+        id: {
+          in: file.spam,
+        },
+      },
+		}) 
 
-		const newSpamShp = await this.dbService.spmShp.createMany({
-			data: file?.spam.map((m) => ({
-				spamId: +m, 
-				geojson
-			}))
-		})
-		if (!newSpamShp) 'Gagal menambah data'
-		return null
+		if(spamSph.length > 0) {
+			return "SPAM sudah didaftarkan sebelumnya"
+		} else {
+			const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
+			const newSpamShp = await this.dbService.spmShp.createMany({
+				data: file?.spam.map((m) => ({
+					spamId: +m, 
+					geojson
+				}))
+			})
+			if (!newSpamShp) 'Gagal menambah data'
+			return null
+		}
 	}
 
 	async updateSpamShp(id: number, file: {fileBase64: string}): Promise<string> {
