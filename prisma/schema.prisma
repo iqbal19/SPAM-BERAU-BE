@@ -129,6 +129,7 @@ model SpmShp {
   id                    Int         @default(autoincrement()) @id
   spam                  Spam?       @relation(fields: [spamId], references: [id])
   spamId                Int?        
+  nama_file             String?
   geojson               Json?                
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @default(now())

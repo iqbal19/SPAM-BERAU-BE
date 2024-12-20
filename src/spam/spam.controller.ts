@@ -84,7 +84,7 @@ export class SpamController {
 
 	@UseGuards(JwtGuard)
 	@Post('/shp-geojson')
-	async shpToGeojson( @Body() file: {fileBase64: string, spam: number[]}, @Res() res: Response ) {
+	async shpToGeojson( @Body() file: {fileBase64: string, nama_file: string, spam: number[]}, @Res() res: Response ) {
 		try {
 			const errMsg = await this.spamService.createSpamShp(file)
 			if (!errMsg) return this.appService.responseSuccess(res, HttpStatus.OK, 'Berhasil menambah data');

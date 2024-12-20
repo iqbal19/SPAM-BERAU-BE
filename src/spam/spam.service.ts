@@ -316,11 +316,12 @@ export class SpamService {
     return null
 	}
 
-	async createSpamShp(file: {fileBase64: string, spam: number[]}): Promise<string> {
+	async createSpamShp(file: {fileBase64: string, nama_file: string, spam: number[]}): Promise<string> {
 		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
 		const newSpamShp = await this.dbService.spmShp.createMany({
 			data: file?.spam.map((m) => ({
 				spamId: +m, 
+				nama_file: file.nama_file,
 				geojson
 			}))
 		})
