@@ -317,59 +317,73 @@ export class SpamService {
 	}
 
 	async createSpamShp(file: {fileBase64: string, spam: number[]}): Promise<string> {
-		const spamSph = await this.dbService.spmShp.findMany({
-			where: {
-        id: {
-          in: file.spam,
-        },
-      },
-		}) 
-
-		if(spamSph.length > 0) {
-			return "SPAM sudah didaftarkan sebelumnya"
-		} else {
-			const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
-			const newSpamShp = await this.dbService.spmShp.createMany({
-				data: file?.spam.map((m) => ({
-					spamId: +m, 
-					geojson
-				}))
-			})
-			if (!newSpamShp) 'Gagal menambah data'
-			return null
-		}
+		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
+		const newSpamShp = await this.dbService.spmShp.createMany({
+			data: file?.spam.map((m) => ({
+				spamId: +m, 
+				geojson
+			}))
+		})
+		if (!newSpamShp) 'Gagal menambah data'
+		return null
 	}
 
-	async updateSpamShp(id: number, file: {fileBase64: string}): Promise<string> {
-		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
-		const updFile = await this.dbService.spmShp.updateMany({
-			where: {
-				spamId: +id
-			},
-			data: {
+	async updateSpamShp(id: number, files: {fileBase64: string, id: number}[]): Promise<string> {
+		const fileArr: any[] = [];
+		for (const item of files) {
+			const geojson = await this.convertBase64ToGeoJSON(item.fileBase64);
+			fileArr.push({
+				id: item.id,
 				geojson
-			}
-		})
+			});
+		}
 
-		if(!updFile) "Gagal update data"
+		const updates = await Promise.all(
+			fileArr.map(async (record) =>
+				await this.dbService.spmShp.update({
+					where: { id: +record.id },
+					data: {
+						spamId: +id,
+						geojson: record.geojson
+					}
+				})
+			)
+		);
+
+		if(!updates) return "Gagal update data"
 		return null
 	}
 
 	async getFileShpbySpam(id: number): Promise<object> {
-		const file = await this.dbService.spmShp.findFirst({
+		const files = await this.dbService.spmShp.findMany({
 			where: {
 				spamId: +id
+			},
+			select: {
+				id: true,
+				spamId: true,
+				geojson: true
 			}
-		})
+		});
+		if (!files || files.length === 0) {
+			throw new Error("Gagal get data");
+		}
 
-		if(!file) "Gagal get data"
-		return file
+// Strukturkan hasil untuk mengembalikan `geojson` sebagai array objek
+		return {
+			id: files[0].id,
+			spamId: files[0].spamId,
+			geojson: files.map(file => ({
+				id: file.id,
+				geojson: file.geojson
+			}))
+		};
 	}
 
 	async deleteFileShp(id: number): Promise<string> {
 		const delFile = await this.dbService.spmShp.delete({
 			where: {
-				spamId: +id
+				id: +id
 			}
 		})
 
@@ -377,9 +391,11 @@ export class SpamService {
 		return null
 	}
 
-	async getFileShp(): Promise<object> {
-		const files = await this.dbService.spmShp.findMany({
+	async getFileShp(): Promise<object[]> {
+    const files = await this.dbService.spmShp.findMany({
 			select: {
+				id: true,
+				spamId: true,
 				spam: {
 					select: {
 						id: true,
@@ -387,17 +403,30 @@ export class SpamService {
 					}
 				}
 			}
-		})
-		const mapReturnFile = files.map(item => {
-			return {
-				id: item.spam.id,
-				nama: item.spam.nama,
-				isFile: true
+    });
+
+    if (!files || files.length === 0) {
+      throw new Error("Gagal get data");
+    }
+
+    // Mengelompokkan data berdasarkan `spamId`
+    const groupedFiles = files.reduce((acc, item) => {
+			const spamId = item.spamId;
+			if (!acc[spamId]) {
+					acc[spamId] = {
+						id_spam: item.spam.id,
+						nama_spam: item.spam.nama,
+						fileShp: []
+					};
 			}
-		})
-		if(!files) "Gagal get data"
-		return mapReturnFile
-	}
+			acc[spamId].fileShp.push({ id: item.id, geojson: "ok"});
+			return acc;
+    }, {});
+
+    // Mengembalikan data dalam bentuk array
+    return Object.values(groupedFiles);
+}
+
 
 	async convertBase64ToGeoJSON(fileBase64: string): Promise<any> {
 		try {

@@ -16,9 +16,8 @@ export class NewsService {
 				createdAt: 'asc'
 			}
 		})
-		const newsPublic = news.map((dt) => dt.description)
 		if (!news) return null
-		return newsPublic
+		return news
 	}
 
 	async findAllNews(): Promise<object> {
