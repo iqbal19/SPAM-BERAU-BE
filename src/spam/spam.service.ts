@@ -397,6 +397,7 @@ export class SpamService {
 			select: {
 				id: true,
 				spamId: true,
+				nama_file: true,
 				spam: {
 					select: {
 						id: true,
