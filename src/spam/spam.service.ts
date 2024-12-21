@@ -418,6 +418,7 @@ export class SpamService {
 					acc[spamId] = {
 						id_spam: item.spam.id,
 						nama_spam: item.spam.nama,
+						nama_file: item.nama_file,
 						fileShp: []
 					};
 			}
