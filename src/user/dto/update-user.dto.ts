@@ -13,7 +13,6 @@ export class UpdateUserDto {
 	@IsEmail()
 	email: string
 
-	@IsNotEmpty()
 	password: string
 
 	@IsNotEmpty()

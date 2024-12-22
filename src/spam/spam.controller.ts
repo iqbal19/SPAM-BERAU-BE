@@ -119,9 +119,9 @@ export class SpamController {
 
 	@UseGuards(JwtGuard)
 	@Put('/shp-geojson/:id')
-	async updateShpGeojson(@Param('id') id: number, @Body() body: { files: {fileBase64: string, id: number}[] }, @Res() res: Response ) {
+	async updateShpGeojson(@Param('id') id: number, @Body() body: { spam: number[] }, @Res() res: Response ) {
 		try {
-			const errMsg = await this.spamService.updateSpamShp(id, body.files)
+			const errMsg = await this.spamService.updateSpamShp(id, body.spam)
 			if (!errMsg) return this.appService.responseSuccess(res, HttpStatus.OK, 'Berhasil mengedit data');
 			return this.appService.responseError(res, 400, errMsg);
 		} catch (error) {

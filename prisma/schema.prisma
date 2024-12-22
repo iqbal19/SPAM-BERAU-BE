@@ -20,7 +20,8 @@ model User {
   nama          String    @db.VarChar(120)
   password      String
   status        Status    @default(AKTIF)
-  role          Role      @default(ADMIN)  
+  role          Role      @default(ADMIN) 
+  deletedAt     DateTime? 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now())
 }
@@ -59,7 +60,7 @@ model Spam {
   fotoSpam            FotoSpam?
   rasioSpam           RasioSpam?
   spamTitik           SpamTitik?
-  spamShp             SpmShp[]
+  spmShp              SpmShp[]
 }
 
 model SpamCakupan {
@@ -117,20 +118,21 @@ model News {
   updatedAt             DateTime    @default(now())
 }
 
-// model ShpFile {
-//   id                    Int         @default(autoincrement()) @id
-//   geojson               Json
-//   spmShp                SpmShp[]
-//   createdAt             DateTime    @default(now())
-//   updatedAt             DateTime    @default(now())
-// }
+model ShpFile {
+  id                    Int         @default(autoincrement()) @id
+  geojson               Json
+  nama_file             String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @default(now())
+  spmShp                SpmShp[]
+}
 
 model SpmShp {
   id                    Int         @default(autoincrement()) @id
   spam                  Spam?       @relation(fields: [spamId], references: [id])
-  spamId                Int?        
-  nama_file             String?
-  geojson               Json?                
+  spamId                Int?           
+  shpFile               ShpFile?    @relation(fields: [shpFileId], references: [id])
+  shpFileId             Int             
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @default(now())
 }

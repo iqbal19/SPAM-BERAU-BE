@@ -15,7 +15,8 @@ export class UserService {
 	async findAllUser(): Promise<object> {
 		const users = await this.dbService.user.findMany({
 			where: {
-				status: 'AKTIF'
+				status: 'AKTIF',
+				deletedAt: null
 			}
 		})
 		if (!users) return null
@@ -84,7 +85,8 @@ export class UserService {
 	async findByUserId(id: string): Promise<User> {
 		const user = await this.dbService.user.findUnique({
 			where: {
-				id: id
+				id: id,
+				deletedAt: null
 			}
 		})
 		if (user) {
@@ -94,7 +96,8 @@ export class UserService {
 	}
 
 	async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<string> {
-		const { nama, username, email, status, role } = updateUserDto
+		const { nama, username, email, status, role, password } = updateUserDto
+		const salt = await bcrypt.genSalt()
 
 		const usr = await this.findByUniq(id, 'id')
 		if(usr.email !== email) {
@@ -105,20 +108,39 @@ export class UserService {
 			const checkUsername = await this.findByUniq(username, 'username')
 			if (checkUsername) return 'Username sudah digunakan'
 		}
+		const data = {
+			nama,
+			username,
+			email,
+			password: password ? await bcrypt.hash(password, salt) : "",
+			status,
+			role
+		}
+
+		if (!password) {
+			delete data.password
+		}
 
 		const updUser = await this.dbService.user.update({
 			where: {
 				id: id
 			},
-			data: {
-				nama,
-				username,
-				email,
-				status,
-				role
-			}
+			data: data
 		})
 		if (!updUser) 'Gagal mengedit data'
 		return null
+	}
+
+	async deleteUser(id: string): Promise<string> {
+		const delSpam = await this.dbService.user.update({
+			where: {
+				id: id
+			},
+			data: {
+				deletedAt: new Date()
+			}
+		})
+		if (!delSpam) 'Gagal menghapus data'
+    return null
 	}
 }

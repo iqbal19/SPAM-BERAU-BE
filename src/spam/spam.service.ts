@@ -304,7 +304,7 @@ export class SpamService {
 	}
 
 	async deleteSpam(id: number): Promise<string> {
-		const delPengurus = await this.dbService.spam.update({
+		const delSpam = await this.dbService.spam.update({
 			where: {
 				id: +id
 			},
@@ -312,47 +312,52 @@ export class SpamService {
 				deletedAt: new Date()
 			}
 		})
-		if (!delPengurus) 'Gagal menghapus data'
+		if (!delSpam) 'Gagal menghapus data'
     return null
 	}
 
 	async createSpamShp(file: {fileBase64: string, nama_file: string, spam: number[]}): Promise<string> {
 		const geojson = await this.convertBase64ToGeoJSON(file.fileBase64)
-		const newSpamShp = await this.dbService.spmShp.createMany({
-			data: file?.spam.map((m) => ({
-				spamId: +m, 
+		const newFile = await this.dbService.shpFile.create({
+			data: {
 				nama_file: file.nama_file,
 				geojson
-			}))
+			}
 		})
-		if (!newSpamShp) 'Gagal menambah data'
-		return null
+
+		if (newFile) {
+			const newSpamShp = await this.dbService.spmShp.createMany({
+				data: file?.spam.map((m) => ({
+					spamId: +m,
+					shpFileId: newFile.id
+				}))
+			})
+			if (!newSpamShp) return 'Gagal menambah data'
+			return null
+		} else {
+			return 'Gagal menambah data'
+		}
 	}
 
-	async updateSpamShp(id: number, files: {fileBase64: string, id: number}[]): Promise<string> {
-		const fileArr: any[] = [];
-		for (const item of files) {
-			const geojson = await this.convertBase64ToGeoJSON(item.fileBase64);
-			fileArr.push({
-				id: item.id,
-				geojson
-			});
+	async updateSpamShp(id: number, spam: number[]): Promise<string> { //id = id file shp
+		const delSpm = await this.dbService.spmShp.deleteMany({
+			where: {
+				shpFileId: +id
+			}
+		})
+
+		if (delSpm) {
+			const newSpamShp = await this.dbService.spmShp.createMany({
+				data: spam.map((m) => ({
+					spamId: +m,
+					shpFileId: Number(id)
+				}))
+			})
+			if (!newSpamShp) return 'Gagal mengubah data'
+			return null
+		} else {
+			return 'Gagal mengubah data'
 		}
-
-		const updates = await Promise.all(
-			fileArr.map(async (record) =>
-				await this.dbService.spmShp.update({
-					where: { id: +record.id },
-					data: {
-						spamId: +id,
-						geojson: record.geojson
-					}
-				})
-			)
-		);
-
-		if(!updates) return "Gagal update data"
-		return null
 	}
 
 	async getFileShpbySpam(id: number): Promise<object> {
@@ -363,7 +368,11 @@ export class SpamService {
 			select: {
 				id: true,
 				spamId: true,
-				geojson: true
+				shpFile: {
+					select: {
+						geojson: true
+					}
+				}
 			}
 		});
 		if (!files || files.length === 0) {
@@ -376,58 +385,59 @@ export class SpamService {
 			spamId: files[0].spamId,
 			geojson: files.map(file => ({
 				id: file.id,
-				geojson: file.geojson
+				geojson: file.shpFile?.geojson
 			}))
 		};
 	}
 
 	async deleteFileShp(id: number): Promise<string> {
-		const delFile = await this.dbService.spmShp.delete({
+		const delSpm = await this.dbService.spmShp.deleteMany({
 			where: {
-				id: +id
+				shpFileId: +id
 			}
 		})
-
-		if(!delFile) "Gagal delete data"
-		return null
+		if (delSpm) {
+			const delFile = await this.dbService.shpFile.delete({
+				where: {
+					id: +id
+				}
+			})
+	
+			if(!delFile) "Gagal delete data"
+			return null
+		}
 	}
 
 	async getFileShp(): Promise<object[]> {
-    const files = await this.dbService.spmShp.findMany({
+		const files = await this.dbService.shpFile.findMany({
 			select: {
 				id: true,
-				spamId: true,
 				nama_file: true,
-				spam: {
+				spmShp: {
 					select: {
-						id: true,
-						nama: true
+						spam: true
 					}
 				}
+			},
+		})
+
+		const newReturnFile = files.map((file) => {
+			return {
+				id: file.id,
+				nama_file: file.nama_file,
+				spam: file.spmShp.map((item) => {
+					return {
+						id: item.spam.id,
+						nama: item.spam.nama
+					}
+				})
 			}
-    });
+		})
 
-    if (!files || files.length === 0) {
-      throw new Error("Gagal get data");
-    }
-
-    // Mengelompokkan data berdasarkan `spamId`
-    const groupedFiles = files.reduce((acc, item) => {
-			const spamId = item.spamId;
-			if (!acc[spamId]) {
-					acc[spamId] = {
-						id_spam: item.spam.id,
-						nama_spam: item.spam.nama,
-						fileShp: []
-					};
-			}
-			acc[spamId].fileShp.push({ id: item.id, geojson: "ok", nama_file: item.nama_file});
-			return acc;
-    }, {});
-
-    // Mengembalikan data dalam bentuk array
-    return Object.values(groupedFiles);
-}
+		if (files) {
+			return newReturnFile
+		}
+	}
 
 
 	async convertBase64ToGeoJSON(fileBase64: string): Promise<any> {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Put, UseGuards, Res } from '@nestjs/common'
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, UseGuards, Res, Delete } from '@nestjs/common'
 import { UserService } from './user.service'
 import { CreateUserDto } from './dto/create-user.dto'
 import { Response } from 'express'
@@ -52,6 +52,17 @@ export class UserController {
 		try {
 			const errMsg = await this.userService.updateUser(id, updateUserDto)
 			if (!errMsg) return this.appService.responseSuccess(res, HttpStatus.OK, 'Berhasil mengedit data');
+			return this.appService.responseError(res, 400, errMsg);
+		} catch (error) {
+			return this.appService.responseError(res, 400, 'terjadi kesalahan');
+		}
+	}
+
+	@Delete('/:id') // update user by id
+	async userDelete(@Param('id') id: string, @Res() res: Response) {
+		try {
+			const errMsg = await this.userService.deleteUser(id)
+			if (!errMsg) return this.appService.responseSuccess(res, HttpStatus.OK, 'Berhasil delete data');
 			return this.appService.responseError(res, 400, errMsg);
 		} catch (error) {
 			return this.appService.responseError(res, 400, 'terjadi kesalahan');
