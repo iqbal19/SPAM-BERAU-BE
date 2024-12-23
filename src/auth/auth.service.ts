@@ -21,18 +21,31 @@ export class AuthService {
 		if (!user) {
 			return {}
 		}
-
-		const access_token = await this.createAccessToken(user.id)
+		const userPayload = {
+			id: user.id,
+			email: user.email,
+			userName: user.username,
+			nama: user.nama,
+			role: user.role
+		}
+		const access_token = await this.createAccessToken(userPayload)
 		const refresh_token = await this.createRefreshToken(user)
 		return { access_token, refresh_token }
 	}
 
 	async refreshAccessToken(refreshTokenDto: RefreshAccessTokenDto): Promise<{ access_token: string }> {
 		const { refresh_token } = refreshTokenDto
-		const payload = await this.decodeToken(refresh_token)
+		const user = await this.decodeToken(refresh_token)
 
-    const access_token = await this.createAccessToken(payload?.jid);
+		const payload = {
+			id: user.id,
+			email: user.email,
+			userName: user.username,
+			nama: user.nama,
+			role: user.role
+		}
 
+    const access_token = await this.createAccessToken(payload);
     return  { access_token };
 	}
 
@@ -48,11 +61,8 @@ export class AuthService {
 		}
 	}
 
-	async createAccessToken(id: string): Promise<string> {
-		const payload = {
-			sub: id
-		}
-		const access_token = await this.jwtService.signAsync(payload)
+	async createAccessToken(user: object): Promise<string> {
+		const access_token = await this.jwtService.signAsync(user)
 		return access_token
 	}
 
@@ -61,7 +71,11 @@ export class AuthService {
 			const expiredAt = new Date()
 			expiredAt.setTime(expiredAt.getTime() + +refreshTokenConfig.expiresIn)
 			const payload = {
-				jid: user.id
+				id: user.id,
+				email: user.email,
+				userName: user.username,
+				nama: user.nama,
+				role: user.role
 			}
 			const refresh_token = await this.jwtService.signAsync(payload, refreshTokenConfig)
 			return refresh_token

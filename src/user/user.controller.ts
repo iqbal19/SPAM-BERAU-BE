@@ -3,10 +3,12 @@ import { UserService } from './user.service'
 import { CreateUserDto } from './dto/create-user.dto'
 import { Response } from 'express'
 import { JwtGuard } from 'src/guard/jwt.guard'
+import { RolesGuard } from 'src/guard/roles.guard'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { AppService } from 'src/app.service'
+import { Roles } from 'src/guard/roles.decorator'
 
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, RolesGuard)
 @Controller('v1/api/user')
 export class UserController {
 	constructor(
@@ -37,6 +39,7 @@ export class UserController {
 	}
 	
 	@Post() // cerate new user
+	@Roles('ADMIN_APLIKASI')
 	async userCreate(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
 		try {
 			const errMsg = await this.userService.createUserCtrl(createUserDto)
@@ -48,6 +51,7 @@ export class UserController {
 	}
 
 	@Put('/:id') // update user by id
+	@Roles('ADMIN_APLIKASI')
 	async userUpdate(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Res() res: Response) {
 		try {
 			const errMsg = await this.userService.updateUser(id, updateUserDto)
@@ -59,6 +63,7 @@ export class UserController {
 	}
 
 	@Delete('/:id') // update user by id
+	@Roles('ADMIN_APLIKASI')
 	async userDelete(@Param('id') id: string, @Res() res: Response) {
 		try {
 			const errMsg = await this.userService.deleteUser(id)
