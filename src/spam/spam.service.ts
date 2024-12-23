@@ -408,6 +408,16 @@ export class SpamService {
 		}
 	}
 
+	async filesShpGeojson(): Promise<object[]> {
+		const files = await this.dbService.shpFile.findMany({
+			select: {
+				geojson: true
+			}
+		})
+
+		return files
+	}
+
 	async getFileShp(): Promise<object[]> {
 		const files = await this.dbService.shpFile.findMany({
 			select: {

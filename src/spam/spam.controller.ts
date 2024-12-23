@@ -105,6 +105,18 @@ export class SpamController {
 		}
   }
 
+	@Get('/geojson/files')
+	async getGeojson(@Res() res: Response) {
+		try {
+			const fileShp = await this.spamService.filesShpGeojson()
+			if (!fileShp) return this.appService.responseError(res, 400, 'data tidak ditemukan');
+			return this.appService.responseSuccess(res, HttpStatus.OK, fileShp);
+		} catch (error) {
+			return this.appService.responseError(res, 400, error);
+		}
+	}
+
+
 	@UseGuards(JwtGuard)
 	@Get('/files-shp/list')
   async getFilesShp(@Res() res: Response) {
