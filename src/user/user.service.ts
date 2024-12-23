@@ -26,6 +26,7 @@ export class UserService {
 	async findUserById(id: string): Promise<object> {
 		const user = await this.findByUniq(id, 'id')
 		if (!user) return null
+		delete user.password
 		return user
 	}
 
