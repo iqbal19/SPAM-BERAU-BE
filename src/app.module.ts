@@ -9,6 +9,7 @@ import { MasterModule } from './master/master.module';
 import { AppService } from './app.service';
 import { FileModule } from './file/file.module';
 import { NewsModule } from './news/news.module';
+import { PekerjaanModule } from './pekerjaan/pekerjaan.module';
 
 @Module({
 	imports: [
@@ -22,7 +23,8 @@ import { NewsModule } from './news/news.module';
 		UserModule,
 		SpamModule,
 		MasterModule,
-		NewsModule
+		NewsModule,
+		PekerjaanModule
 	],
 	providers: [AppService],
   exports: [AppService]

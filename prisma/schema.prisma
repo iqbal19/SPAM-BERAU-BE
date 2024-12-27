@@ -61,6 +61,7 @@ model Spam {
   rasioSpam           RasioSpam?
   spamTitik           SpamTitik?
   spmShp              SpmShp[]
+  pekerjaan           Pekerjaan?
 }
 
 model SpamCakupan {
@@ -135,6 +136,29 @@ model SpmShp {
   shpFileId             Int             
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @default(now())
+}
+
+model Pekerjaan {
+  id                    Int         @default(autoincrement()) @id
+  spam                  Spam?       @relation(fields: [spamId], references: [id])
+  spamId                Int?        @unique
+  progress              Int
+  lat                   Decimal
+  long                  Decimal
+  alamat                String?
+  description           String?     @db.Text
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @default(now())
+  fotoPekerjaan         FotoPekerjaan[]
+}
+
+model FotoPekerjaan {
+  id                    Int              @default(autoincrement()) @id
+  pekerjaan             Pekerjaan?       @relation(fields: [pekerjaanId], references: [id])
+  pekerjaanId           Int?
+  foto                  String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @default(now())
 }
 
 enum Status {
