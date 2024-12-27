@@ -118,7 +118,7 @@ export class PekerjaanService {
 		const { alamat, lat, long, description, progress } = pekerjaanDto;
 		// Update pekerjaan
 		const uptPekerjaan = await this.dbService.pekerjaan.update({
-			where: { id: +id },
+			where: { spamId: +id },
 			data: {
 				alamat,
 				lat,
