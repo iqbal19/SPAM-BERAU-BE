@@ -14,6 +14,12 @@ export class PekerjaanService {
 		this.baseUrl = process.env.BASE_URL
 	}
 
+	async getPekerjaan(): Promise<object> {
+		const pekerjaans = await this.dbService.pekerjaan.findMany()
+		if (!pekerjaans) return null
+		return pekerjaans
+	}
+
 	async createPekerjaan(pekerjaanDto: PekerjaanDto): Promise<string> {
 		const {alamat, lat, long, description, progress, spamId, fotos} = pekerjaanDto;
 		const newPekerjaan = await this.dbService.pekerjaan.create({

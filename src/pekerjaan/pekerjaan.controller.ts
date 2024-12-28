@@ -12,6 +12,17 @@ export class PekerjaanController {
 		private readonly appService: AppService
 	) {}
 
+	@Get('')
+	async spamsPetaFind(@Res() res: Response) {
+		try {
+			const pekerjaans = await this.pekerjaanService.getPekerjaan()
+			if (!pekerjaans) return this.appService.responseError(res, 400, 'data tidak ditemukan');
+			return this.appService.responseSuccess(res, HttpStatus.OK, pekerjaans);
+		} catch (error) {
+			return this.appService.responseError(res, 400, 'terjadi kesalahan');
+		}
+	}
+
   @Post('')
 	@UseGuards(JwtGuard)
 	async createPekerjaan(@Body() pekerjaanDto: PekerjaanDto, @Res() res: Response) {
