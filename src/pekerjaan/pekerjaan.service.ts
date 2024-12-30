@@ -132,38 +132,61 @@ export class PekerjaanService {
 	}
 
 	async updatePekerjaan(id: number, pekerjaanDto: PekerjaanDto): Promise<string> {
-		const { alamat, lat, long, description, progress, fotosEdit } = pekerjaanDto;
-		// Update pekerjaan
-		const uptPekerjaan = await this.dbService.pekerjaan.update({
-			where: { id: +id },
-			data: {
-				alamat,
-				lat,
-				long,
-				description,
-				progress
-			},
+		const { alamat, lat, long, description, progress, fotos } = pekerjaanDto;
+
+		const existingFotos = await this.dbService.fotoPekerjaan.findMany({
+			where: { pekerjaanId: +id },
+		});
+		
+		const fotoUrls: string[] = [];
+		
+		for (const foto of fotos) {
+			if (foto.startsWith('data:image/')) {
+				fotoUrls.push(await this.createUrlFoto(foto))
+			} else {
+				fotoUrls.push(foto)
+			}
+		}
+		
+		const result = await this.dbService.$transaction(async (tx) => {
+			// Update data pekerjaan
+			const pekerjaan = await tx.pekerjaan.update({
+				where: { id: +id },
+				data: {
+					alamat,
+					lat,
+					long,
+					description,
+					progress
+				},
+			});
+			
+			// Hapus semua foto lama dari database
+			await tx.fotoPekerjaan.deleteMany({
+				where: { pekerjaanId: +id },
+			});
+			
+			// Hapus file lama dari folder (hanya file lokal)
+			const normalizeFoto = fotoUrls.map(it => this.normalizePath(it))
+			for (const foto of existingFotos) {
+				if (!normalizeFoto.includes(this.normalizePath(foto.foto))) {
+					this.fileService.deleteFile(foto.foto)
+				}
+			}
+	
+			// Tambahkan foto baru ke database
+			for (const fotoUrl of fotoUrls) {
+				await tx.fotoPekerjaan.create({
+					data: {
+						pekerjaanId: pekerjaan.id,
+						foto: fotoUrl,
+					},
+				});
+			}
 		});
 
-		for (const dt of fotosEdit) {
-			this.clearAndCreateFoto(dt.id, id, dt.foto)
-		}
-
-		if (!uptPekerjaan) return "Gegal update pekerjaan"
 		return null
-	}
 
-	async clearAndCreateFoto(id: number, pekerjaanId: number, foto: string): Promise<string> {
-		if (foto.startsWith('data:image/')) {
-			await this.deleteFoto(id)
-			const payload = {
-				pekerjaanId: +pekerjaanId,
-				foto
-			}
-			await this.createFotoPekerjaan(payload)
-			return
-		}
-		return
 	}
 
 	async deletePekerjaan(id: number): Promise<string> {

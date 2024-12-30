@@ -25,15 +25,4 @@ export class PekerjaanDto {
 
   @IsArray()
   fotos: string[]
-
-  @IsArray()
-  fotosEdit: FotoEditDto[]
-}
-
-class FotoEditDto {
-  @IsNumber()
-  id: number;
-
-  @IsString()
-  foto: string;
 }
