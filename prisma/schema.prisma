@@ -61,7 +61,7 @@ model Spam {
   rasioSpam           RasioSpam?
   spamTitik           SpamTitik?
   spmShp              SpmShp[]
-  pekerjaan           Pekerjaan?
+  pekerjaan           Pekerjaan[]
 }
 
 model SpamCakupan {
@@ -141,7 +141,7 @@ model SpmShp {
 model Pekerjaan {
   id                    Int         @default(autoincrement()) @id
   spam                  Spam?       @relation(fields: [spamId], references: [id])
-  spamId                Int?        @unique
+  spamId                Int?
   progress              Int
   lat                   Decimal
   long                  Decimal

@@ -29,7 +29,8 @@ export class SpamService {
 			include: {
 				spamTitik: true,
 				fotoSpam: true,
-				rasioSpam: true
+				rasioSpam: true,
+				pekerjaan: true
 			}
 		})
 		if (!spam) return null

@@ -15,7 +15,16 @@ export class PekerjaanService {
 	}
 
 	async getPekerjaan(): Promise<object> {
-		const pekerjaans = await this.dbService.pekerjaan.findMany()
+		const pekerjaans = await this.dbService.pekerjaan.findMany({
+			select: {
+				id: true,
+				lat: true,
+				long: true,
+				alamat: true,
+				description: true,
+				fotoPekerjaan: true
+			}
+		})
 		if (!pekerjaans) return null
 		return pekerjaans
 	}
@@ -89,7 +98,7 @@ export class PekerjaanService {
 	}
 
 	async getPekerjaanBySpamId(id: number): Promise<object> {
-		const pekerjaan = await this.dbService.pekerjaan.findFirst({
+		const pekerjaan = await this.dbService.pekerjaan.findMany({
 			where: {
 				spamId: +id
 			},
@@ -98,19 +107,21 @@ export class PekerjaanService {
 			}
 		})
 
-		const newReturnPekerjaan = {
-			id: pekerjaan.id,
-			lat: pekerjaan.lat,
-			long: pekerjaan.long,
-			alamat: pekerjaan.alamat,
-			description: pekerjaan.description,
-			fotos: pekerjaan.fotoPekerjaan.map(item => {
-				return {
-					fotoId: item.id,
-					foto: item.foto
-				}
-			})
-		}
+		const newReturnPekerjaan = pekerjaan.map((item) => {
+			return {
+				id: item.id,
+				lat: item.lat,
+				long: item.long,
+				alamat: item.alamat,
+				description: item.description,
+				fotos: item.fotoPekerjaan.map(item => {
+					return {
+						fotoId: item.id,
+						foto: item.foto
+					}
+				})
+			}
+		})
 
 		if (!pekerjaan) return null
 		return newReturnPekerjaan
@@ -124,7 +135,7 @@ export class PekerjaanService {
 		const { alamat, lat, long, description, progress } = pekerjaanDto;
 		// Update pekerjaan
 		const uptPekerjaan = await this.dbService.pekerjaan.update({
-			where: { spamId: +id },
+			where: { id: +id },
 			data: {
 				alamat,
 				lat,
