@@ -132,7 +132,7 @@ export class PekerjaanService {
 	}
 
 	async updatePekerjaan(id: number, pekerjaanDto: PekerjaanDto): Promise<string> {
-		const { alamat, lat, long, description, progress } = pekerjaanDto;
+		const { alamat, lat, long, description, progress, fotosEdit } = pekerjaanDto;
 		// Update pekerjaan
 		const uptPekerjaan = await this.dbService.pekerjaan.update({
 			where: { id: +id },
@@ -145,8 +145,25 @@ export class PekerjaanService {
 			},
 		});
 
+		for (const dt of fotosEdit) {
+			this.clearAndCreateFoto(dt.id, id, dt.foto)
+		}
+
 		if (!uptPekerjaan) return "Gegal update pekerjaan"
 		return null
+	}
+
+	async clearAndCreateFoto(id: number, pekerjaanId: number, foto: string): Promise<string> {
+		if (foto.startsWith('data:image/')) {
+			await this.deleteFoto(id)
+			const payload = {
+				pekerjaanId: +pekerjaanId,
+				foto
+			}
+			await this.createFotoPekerjaan(payload)
+			return
+		}
+		return
 	}
 
 	async deletePekerjaan(id: number): Promise<string> {

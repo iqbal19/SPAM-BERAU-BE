@@ -58,7 +58,7 @@ export class PekerjaanController {
 		}
 	}
 
-	@Put('/:id') //id spam
+	@Put('/:id') //id pekerjaan
 	@UseGuards(JwtGuard)
 	async updatePekerjaan(@Param('id') id: number, @Body() pekerjaanDto: PekerjaanDto, @Res() res: Response) {
 		try {
