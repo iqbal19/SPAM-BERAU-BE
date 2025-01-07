@@ -115,6 +115,7 @@ export class PekerjaanService {
 				long: item.long,
 				alamat: item.alamat,
 				description: item.description,
+				progress: item.progress,
 				fotos: item.fotoPekerjaan.map(item => {
 					return {
 						fotoId: item.id,
