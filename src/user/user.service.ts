@@ -17,6 +17,14 @@ export class UserService {
 			where: {
 				status: 'AKTIF',
 				deletedAt: null
+			},
+			include: {
+				spam: {
+					select: {
+						id: true,
+						nama: true
+					}
+				}
 			}
 		})
 		if (!users) return null
@@ -65,15 +73,16 @@ export class UserService {
 
 	async findByUniq(unique: string, type?: string) {
 		let whereParams: any 
-		if (type === 'email') whereParams = {email: unique} 
-		if (type === 'username') whereParams = { username: unique } 
-		if (type === 'id') whereParams = { id: unique } 
+		if (type === 'email') whereParams = {email: unique, status: 'AKTIF', deletedAt: null} 
+		if (type === 'username') whereParams = { username: unique, status: 'AKTIF', deletedAt: null } 
+		if (type === 'id') whereParams = { id: unique, status: 'AKTIF', deletedAt: null } 
 		const user = await this.dbService.user.findUnique({
 			where: whereParams,
 			include: {
 				spam: {
 					select: {
-						id: true
+						id: true,
+						nama: true
 					}
 				}
 			}
@@ -126,7 +135,11 @@ export class UserService {
 			password: password ? await bcrypt.hash(password, salt) : "",
 			status,
 			role,
-			spamId
+			spam: spamId
+				? { connect: { id: spamId } } // Hubungkan ke Spam jika ada `spamId`
+				: spamId === null
+				? { disconnect: true } // Lepaskan hubungan jika `spamId` = null
+				: undefined,
 		}
 
 		if (!password) {
