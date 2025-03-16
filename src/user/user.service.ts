@@ -31,7 +31,7 @@ export class UserService {
 	}
 
 	async createUser(createUserDto: CreateUserDto): Promise<User>  {
-		const { nama, username, email, password, status, role } = createUserDto
+		const { nama, username, email, password, status, role, spamId } = createUserDto
 
 		const salt = await bcrypt.genSalt()
 		const newUser = await this.dbService.user.create({
@@ -41,7 +41,10 @@ export class UserService {
 				email,
 				password: await bcrypt.hash(password, salt),
 				status,
-				role
+				role,
+				spam: {
+					connect: { id: spamId }, // Hubungkan ke Spam yang sudah ada
+				},
 			}
 		})
 		return newUser
@@ -66,7 +69,14 @@ export class UserService {
 		if (type === 'username') whereParams = { username: unique } 
 		if (type === 'id') whereParams = { id: unique } 
 		const user = await this.dbService.user.findUnique({
-			where: whereParams
+			where: whereParams,
+			include: {
+				spam: {
+					select: {
+						id: true
+					}
+				}
+			}
 		})
 		return user
 	}
@@ -97,7 +107,7 @@ export class UserService {
 	}
 
 	async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<string> {
-		const { nama, username, email, status, role, password } = updateUserDto
+		const { nama, username, email, status, role, password, spamId } = updateUserDto
 		const salt = await bcrypt.genSalt()
 
 		const usr = await this.findByUniq(id, 'id')
@@ -115,7 +125,8 @@ export class UserService {
 			email,
 			password: password ? await bcrypt.hash(password, salt) : "",
 			status,
-			role
+			role,
+			spamId
 		}
 
 		if (!password) {

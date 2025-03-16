@@ -8,8 +8,8 @@ async function bootstrap() {
     origin: ['http://localhost:5173', 'https://fe.luminos.my.id'], // or the frontend URL
     methods: 'GET,POST,PUT,DELETE, PATCH',
   });
-  app.use(bodyParser.json({ limit: '12mb' }));
-  app.use(bodyParser.urlencoded({ limit: '12mb', extended: true }));
+  app.use(bodyParser.json({ limit: '20mb' }));
+  app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
   
 	await app.listen(3000)
 }

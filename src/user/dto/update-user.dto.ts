@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator'
+import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator'
 
 export class UpdateUserDto {
 
@@ -22,6 +22,9 @@ export class UpdateUserDto {
 	@IsNotEmpty()
 	@IsString()
 	role: Role
+
+	@IsNumber()
+	spamId: number
 }
 
 export enum Status {
@@ -31,5 +34,6 @@ export enum Status {
 
 enum Role {
   ADMIN_APLIKASI='ADMIN_APLIKASI',
-  ADMIN='ADMIN'
+  ADMIN='ADMIN',
+  PENGELOLA='PENGELOLA'
 }

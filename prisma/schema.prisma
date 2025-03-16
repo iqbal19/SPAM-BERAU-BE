@@ -24,6 +24,7 @@ model User {
   deletedAt     DateTime? 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now())
+  spam          Spam?
 }
 
 model Desa {
@@ -56,12 +57,16 @@ model Spam {
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @default(now())
 
-  SpamCakupan         SpamCakupan[]
-  fotoSpam            FotoSpam?
-  rasioSpam           RasioSpam?
-  spamTitik           SpamTitik?
-  spmShp              SpmShp[]
-  pekerjaan           Pekerjaan[]
+  SpamCakupan           SpamCakupan[]
+  fotoSpam              FotoSpam?
+  rasioSpam             RasioSpam?
+  spamTitik             SpamTitik?
+  spmShp                SpmShp[]
+  pekerjaan             Pekerjaan[]
+  laporan               Laporan[]
+  laporan_administrasi  LaporanAdministrasi[]
+  user                  User?        @relation(fields: [userId], references: [id])
+  userId                String?      @unique
 }
 
 model SpamCakupan {
@@ -161,6 +166,52 @@ model FotoPekerjaan {
   updatedAt             DateTime         @default(now())
 }
 
+model LaporanAdministrasi {
+  id                    Int              @default(autoincrement()) @id
+  bulan                 String
+  file_keuangan         String?
+  file_neraca           String?
+  spam                  Spam?       @relation(fields: [spamId], references: [id])
+  spamId                Int?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @default(now())
+}
+
+model Laporan {
+  id                    Int              @default(autoincrement()) @id
+  bulan                 String
+  jumlah_sr             Decimal
+  sr_aktif              Decimal
+  intake                StatusLaporan
+  intake_ket            String?
+  intake_foto           String?
+  wtp                   StatusLaporan
+  wtp_ket               String?
+  wtp_foto              String?
+  panel_intake          StatusLaporan
+  panel_intake_ket      String?
+  panel_intake_foto     String?
+  panel_distribusi      StatusLaporan
+  panel_distribusi_ket  String?
+  panel_distribusi_foto String?
+  pompa_intake          StatusLaporan
+  pompa_intake_ket      String?
+  pompa_intake_foto     String?
+  pompa_distribusi      StatusLaporan
+  pompa_distribusi_ket  String?
+  pompa_distribusi_foto String?
+  pipa_transmisi        StatusLaporan
+  pipa_transmisi_ket    String?
+  pipa_transmisi_foto   String?
+  pipa_distribusi       StatusLaporan
+  pipa_distribusi_ket   String?
+  pipa_distribusi_foto  String?
+  spam                  Spam?       @relation(fields: [spamId], references: [id])
+  spamId                Int?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @default(now())
+}
+
 enum Status {
   AKTIF
   NON_AKTIF
@@ -169,4 +220,11 @@ enum Status {
 enum Role {
   ADMIN_APLIKASI
   ADMIN
+  PENGELOLA
+}
+
+enum StatusLaporan {
+  BAIK
+  RUSAK
+  RUSAK_DIPERBAIKI
 }

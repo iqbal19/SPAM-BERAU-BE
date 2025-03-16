@@ -10,6 +10,7 @@ import { AppService } from './app.service';
 import { FileModule } from './file/file.module';
 import { NewsModule } from './news/news.module';
 import { PekerjaanModule } from './pekerjaan/pekerjaan.module';
+import { LaporanModule } from './laporan/laporan.module';
 
 @Module({
 	imports: [
@@ -24,7 +25,8 @@ import { PekerjaanModule } from './pekerjaan/pekerjaan.module';
 		SpamModule,
 		MasterModule,
 		NewsModule,
-		PekerjaanModule
+		PekerjaanModule,
+		LaporanModule
 	],
 	providers: [AppService],
   exports: [AppService]
