@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator'
+import { IsNotEmpty, IsNumber, ValidateNested, IsArray, IsOptional, IsString, IsBoolean } from 'class-validator'
+import { Type } from 'class-transformer';
+
 
 export class LaporanDto {
 	@IsNotEmpty()
@@ -21,10 +23,6 @@ export class LaporanDto {
 	@IsOptional()
 	intake_ket: string
 
-	@IsString()
-	@IsOptional()
-	intake_foto: string
-
 	@IsNotEmpty()
 	@IsString()
 	wtp: StatusLaporan
@@ -32,10 +30,6 @@ export class LaporanDto {
 	@IsString()
 	@IsOptional()
 	wtp_ket: string
-
-	@IsString()
-	@IsOptional()
-	wtp_foto: string
 
 	@IsNotEmpty()
 	@IsString()
@@ -45,10 +39,6 @@ export class LaporanDto {
 	@IsOptional()
 	panel_intake_ket: string
 
-	@IsString()
-	@IsOptional()
-	panel_intake_foto: string
-
 	@IsNotEmpty()
 	@IsString()
 	panel_distribusi: StatusLaporan
@@ -56,10 +46,6 @@ export class LaporanDto {
 	@IsString()
 	@IsOptional()
 	panel_distribusi_ket: string
-
-	@IsString()
-	@IsOptional()
-	panel_distribusi_foto: string
 
 	@IsNotEmpty()
 	@IsString()
@@ -69,10 +55,6 @@ export class LaporanDto {
 	@IsOptional()
 	pompa_intake_ket: string
 
-	@IsString()
-	@IsOptional()
-	pompa_intake_foto: string
-
 	@IsNotEmpty()
 	@IsString()
 	pompa_distribusi: StatusLaporan
@@ -80,10 +62,6 @@ export class LaporanDto {
 	@IsString()
 	@IsOptional()
 	pompa_distribusi_ket: string
-
-	@IsString()
-	@IsOptional()
-	pompa_distribusi_foto: string
 
 	@IsNotEmpty()
 	@IsString()
@@ -93,10 +71,6 @@ export class LaporanDto {
 	@IsOptional()
 	pipa_transmisi_ket: string
 
-	@IsString()
-	@IsOptional()
-	pipa_transmisi_foto: string
-
 	@IsNotEmpty()
 	@IsString()
 	pipa_distribusi: StatusLaporan
@@ -105,17 +79,44 @@ export class LaporanDto {
 	@IsOptional()
 	pipa_distribusi_ket: string
 
-	@IsString()
-	@IsOptional()
-	pipa_distribusi_foto: string
-
 	@IsNotEmpty()
 	@IsNumber()
 	spamId: number
+
+	@IsArray() // ✅ Pastikan ini adalah array
+  	@ValidateNested({ each: true }) // ✅ Validasi setiap elemen dalam array
+  	@Type(() => FileLaporanDto) // ✅ Konversi setiap elemen ke FileLaporanDto
+  	@IsOptional() // ✅ Opsional, bisa dikosongkan
+	fileLaporan: FileLaporanDto[]
+}
+
+export class FileLaporanDto {
+	@IsOptional()
+	@IsNumber()
+	id: number
+
+	@IsNotEmpty()
+	@IsString()
+	type: TypeLaporan
+
+	@IsString()
+	@IsNotEmpty()
+	file: string
 }
 
 enum StatusLaporan {
 	BAIK='BAIK',
 	RUSAK='RUSAK',
 	RUSAK_DIPERBAIKI='RUSAK_DIPERBAIKI'
+}
+
+enum TypeLaporan {
+	intake="intake",
+	wtp="wtp",
+	panel_intake="panel_intake",
+	panel_distribusi="panel_distribusi",
+	pompa_intake="pompa_intake",
+	pompa_distribusi="pompa_distribusi",
+	pipa_distribusi="pipa_distribusi",
+	pipa_transmisi="pipa_transmisi"
 }

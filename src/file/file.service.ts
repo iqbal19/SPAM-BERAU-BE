@@ -71,6 +71,9 @@ export class FileService {
       case 'application/pdf': return 'pdf';
       case 'application/octet-stream': return 'shp';
       case 'application/x-shapefile': return 'shp';
+      case 'application/vnd.ms-excel': return 'xls'; // Excel 97-2003
+      case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': return 'xlsx'; // Excel modern
+      case 'text/csv': return 'csv'; // File CSV
       default: return 'bin';
     }
   }

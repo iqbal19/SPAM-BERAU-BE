@@ -184,30 +184,33 @@ model Laporan {
   sr_aktif              Decimal
   intake                StatusLaporan
   intake_ket            String?
-  intake_foto           String?
   wtp                   StatusLaporan
   wtp_ket               String?
-  wtp_foto              String?
   panel_intake          StatusLaporan
   panel_intake_ket      String?
-  panel_intake_foto     String?
   panel_distribusi      StatusLaporan
   panel_distribusi_ket  String?
-  panel_distribusi_foto String?
   pompa_intake          StatusLaporan
   pompa_intake_ket      String?
-  pompa_intake_foto     String?
   pompa_distribusi      StatusLaporan
   pompa_distribusi_ket  String?
-  pompa_distribusi_foto String?
   pipa_transmisi        StatusLaporan
   pipa_transmisi_ket    String?
-  pipa_transmisi_foto   String?
   pipa_distribusi       StatusLaporan
   pipa_distribusi_ket   String?
-  pipa_distribusi_foto  String?
   spam                  Spam?       @relation(fields: [spamId], references: [id])
   spamId                Int?
+  fileLaporan           FileLaporan[]
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @default(now())
+}
+
+model FileLaporan {
+  id                    Int              @default(autoincrement()) @id
+  type                  TypeFile?
+  file                  String?
+  laporanId             Int
+  laporan               Laporan          @relation(fields: [laporanId], references:[id])
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @default(now())
 }
@@ -227,4 +230,15 @@ enum StatusLaporan {
   BAIK
   RUSAK
   RUSAK_DIPERBAIKI
+}
+
+enum TypeFile {
+  intake
+  wtp
+  panel_intake
+  panel_distribusi
+  pompa_intake
+  pompa_distribusi
+  pipa_distribusi
+  pipa_transmisi
 }

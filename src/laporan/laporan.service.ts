@@ -33,34 +33,100 @@ export class LaporanService {
 		const laporan = await this.dbService.laporan.findMany({
 			orderBy: {
 				createdAt: 'asc'
+			},
+			include: {
+				fileLaporan: true
 			}
 		})
+
+		const laporanWithDirectFiles = laporan.map(lap => {
+			const groupedFiles = lap.fileLaporan.reduce((acc, file) => {
+			  if (!acc[file.type]) {
+				acc[file.type] = []; // Buat array baru jika belum ada
+			  }
+			  acc[file.type].push(file); // Tambahkan file ke dalam grup yang sesuai
+			  return acc;
+			}, {} as Record<string, typeof lap.fileLaporan>);
+		  
+			return {
+			  ...lap,
+			  ...groupedFiles, // Gabungkan hasil grouping ke dalam objek laporan langsung
+			  fileLaporan: undefined // Hilangkan properti fileLaporan lama
+			};
+		});
+
 		if (!laporan) return null
-		return laporan
+		return laporanWithDirectFiles
 	}
 
 	async findLaporanBySpam(id: number): Promise<object> {
 		const laporan = await this.dbService.laporan.findMany({
 			where: {
 				spamId: +id
+			},
+			include: {
+				fileLaporan: true
 			}
 		})
+
+		const laporanWithDirectFiles = laporan.map(lap => {
+			const groupedFiles = lap.fileLaporan.reduce((acc, file) => {
+			  if (!acc[file.type]) {
+				acc[file.type] = []; // Buat array baru jika belum ada
+			  }
+			  acc[file.type].push(file); // Tambahkan file ke dalam grup yang sesuai
+			  return acc;
+			}, {} as Record<string, typeof lap.fileLaporan>);
+		  
+			return {
+			  ...lap,
+			  ...groupedFiles, // Gabungkan hasil grouping ke dalam objek laporan langsung
+			  fileLaporan: undefined // Hilangkan properti fileLaporan lama
+			};
+		});
+
 		if (!laporan) return null
-		return laporan
+		return laporanWithDirectFiles
 	}
 
 	async findLaporanById(id: number): Promise<object> {
 		const laporan = await this.dbService.laporan.findUnique({
 			where: {
 				id: +id
+			},
+			include: {
+				fileLaporan: true
 			}
 		})
+
+		const groupedFiles = laporan.fileLaporan.reduce((acc, file) => {
+		  if (!acc[file.type]) {
+			acc[file.type] = []; // Buat array baru jika belum ada
+		  }
+		  acc[file.type].push(file); // Tambahkan file ke dalam grup yang sesuai
+		  return acc;
+		}, {} as Record<string, typeof laporan.fileLaporan>);
+		
 		if (!laporan) return null
-		return laporan
+		return {
+			...laporan,
+			...groupedFiles, // Gabungkan hasil grouping
+			fileLaporan: undefined // Hilangkan properti lama agar lebih rapi
+		};
 	}
 
 	async createLaporan(laporanDto: LaporanDto): Promise<string>  {
-		const { bulan, jumlah_sr, sr_aktif, intake, intake_ket, intake_foto, wtp, wtp_ket, wtp_foto, panel_intake, panel_intake_ket, panel_intake_foto, panel_distribusi, panel_distribusi_ket, panel_distribusi_foto, pompa_intake, pompa_intake_ket, pompa_intake_foto, pompa_distribusi, pompa_distribusi_ket, pompa_distribusi_foto, pipa_transmisi, pipa_transmisi_ket, pipa_transmisi_foto, pipa_distribusi, pipa_distribusi_ket, pipa_distribusi_foto, spamId  } = laporanDto
+		const { bulan, jumlah_sr, sr_aktif, intake, intake_ket, wtp, wtp_ket, panel_intake, 
+			panel_intake_ket, panel_distribusi, panel_distribusi_ket, pompa_intake, pompa_intake_ket, 
+			pompa_distribusi, pompa_distribusi_ket, pipa_transmisi, pipa_transmisi_ket, pipa_distribusi, 
+			pipa_distribusi_ket, spamId, fileLaporan  } = laporanDto
+		
+		const fileLaporanData = await Promise.all(
+			fileLaporan.map(async (fl) => ({
+				type: fl.type,
+				file: await this.createUrlFoto(fl.file) // ✅ `await` berjalan dengan `Promise.all()`
+			}))
+		);
 
 		const newLaporan = await this.dbService.laporan.create({
 			data: {
@@ -69,29 +135,22 @@ export class LaporanService {
 				sr_aktif,
 				intake,
 				intake_ket,
-				intake_foto: await this.createUrlFoto(intake_foto),
 				wtp,
 				wtp_ket,
-				wtp_foto: await this.createUrlFoto(wtp_foto),
 				panel_intake,
 				panel_intake_ket,
-				panel_intake_foto: await this.createUrlFoto(panel_intake_foto),
 				panel_distribusi,
 				panel_distribusi_ket,
-				panel_distribusi_foto: await this.createUrlFoto(panel_distribusi_foto),
 				pompa_intake,
 				pompa_intake_ket,
-				pompa_intake_foto: await this.createUrlFoto(pompa_intake_foto),
 				pompa_distribusi,
 				pompa_distribusi_ket,
-				pompa_distribusi_foto: await this.createUrlFoto(pompa_distribusi_foto),
 				pipa_transmisi,
 				pipa_transmisi_ket,
-				pipa_transmisi_foto: await this.createUrlFoto(pipa_transmisi_foto),
 				pipa_distribusi,
 				pipa_distribusi_ket,
-				pipa_distribusi_foto: await this.createUrlFoto(pipa_distribusi_foto),
-				spamId
+				spamId,
+				fileLaporan: { create: fileLaporanData } 
 			}
 		})
 		if (!newLaporan) "Gagal menambah data"
@@ -109,109 +168,22 @@ export class LaporanService {
 	}
 
 	async updateLaporan(id: number, laporanDto: LaporanDto): Promise<string> {
-		const { bulan, jumlah_sr, sr_aktif, intake, intake_ket, intake_foto, wtp, wtp_ket, wtp_foto, panel_intake, panel_intake_ket, panel_intake_foto, panel_distribusi, panel_distribusi_ket, panel_distribusi_foto, pompa_intake, pompa_intake_ket, pompa_intake_foto, pompa_distribusi, pompa_distribusi_ket, pompa_distribusi_foto, pipa_transmisi, pipa_transmisi_ket, pipa_transmisi_foto, pipa_distribusi, pipa_distribusi_ket, pipa_distribusi_foto, spamId  } = laporanDto
+		const { bulan, jumlah_sr, sr_aktif, intake, intake_ket, wtp, wtp_ket, panel_intake, panel_intake_ket, 
+			panel_distribusi, panel_distribusi_ket, pompa_intake, pompa_intake_ket, pompa_distribusi,
+			pompa_distribusi_ket, pipa_transmisi, pipa_transmisi_ket, pipa_distribusi, pipa_distribusi_ket, 
+			spamId, fileLaporan} = laporanDto
 
-		const lpr = await this.dbService.laporan.findUnique({
-			where: {
-				id: +id
-			}
-		})
-
-		let fotoIntake = ""
-		if (this.normalizePath(lpr.intake_foto) !== this.normalizePath(intake_foto)) {
-			if (lpr.intake_foto) {
-				const url = await this.fileService.updateFile(lpr.intake_foto, intake_foto, "laporan")
-				fotoIntake = `${this.baseUrl}/uploads/${url}`;
-			} else {
-				fotoIntake = await this.createUrlFoto(intake_foto)
-			}
-		} else {
-			fotoIntake = intake_foto
-		}
-
-		let fotoWtp = ""
-		if (this.normalizePath(lpr.wtp_foto) !== this.normalizePath(wtp_foto)) {
-			if (lpr.wtp_foto) {
-				const url = await this.fileService.updateFile(lpr.wtp_foto, wtp_foto, "laporan")
-				fotoWtp = `${this.baseUrl}/uploads/${url}`;
-			} else {
-				fotoWtp = await this.createUrlFoto(wtp_foto)
-			}
-		} else {
-			fotoWtp = wtp_foto
-		}
-
-		let fotoPanelIntake = ""
-		if (this.normalizePath(lpr.panel_intake_foto) !== this.normalizePath(panel_intake_foto)) {
-			if (lpr.panel_intake_foto) {
-				const url = await this.fileService.updateFile(lpr.panel_intake_foto, panel_intake_foto, "laporan")
-				fotoPanelIntake = `${this.baseUrl}/uploads/${url}`;
-			} else {
-				fotoPanelIntake = await this.createUrlFoto(panel_intake_foto)
-			}
-		} else {
-			fotoPanelIntake = panel_intake_foto
-		}
-
-		let fotoPanelDistribusi = ""
-		if (this.normalizePath(lpr.panel_distribusi_foto) !== this.normalizePath(panel_distribusi_foto)) {
-			if (lpr.panel_distribusi_foto) {
-				const url = await this.fileService.updateFile(lpr.panel_distribusi_foto, panel_distribusi_foto, "laporan")
-				fotoPanelDistribusi = `${this.baseUrl}/uploads/${url}`;
-			} else {
-				fotoPanelDistribusi = await this.createUrlFoto(panel_distribusi_foto)
-			}
-		} else {
-			fotoPanelDistribusi = panel_distribusi_foto
-		}
-
-		let fotoPompaIntake = ""
-		if (this.normalizePath(lpr.pompa_intake_foto) !== this.normalizePath(pompa_intake_foto)) {
-			if (lpr.pompa_intake_foto) {
-				const url = await this.fileService.updateFile(lpr.pompa_intake_foto, pompa_intake_foto, "laporan")
-				fotoPompaIntake = `${this.baseUrl}/uploads/${url}`;
-			} else {
-				fotoPompaIntake = await this.createUrlFoto(pompa_intake_foto)
-			}
-		} else {
-			fotoPompaIntake = pompa_intake_foto
-		}
-
-		let fotoPompaDistribusi = ""
-		if (this.normalizePath(lpr.pompa_distribusi_foto) !== this.normalizePath(pompa_distribusi_foto)) {
-			if (lpr.pompa_distribusi_foto) {
-				const url = await this.fileService.updateFile(lpr.pompa_distribusi_foto, pompa_distribusi_foto, "laporan")
-				fotoPompaDistribusi = `${this.baseUrl}/uploads/${url}`;
-			} else {
-				fotoPompaDistribusi = await this.createUrlFoto(pompa_distribusi_foto)
-			}
-		} else {
-			fotoPompaDistribusi = pompa_distribusi_foto
-		}
-
-		let fotoPipaTransmisi = ""
-		if (this.normalizePath(lpr.pipa_transmisi_foto) !== this.normalizePath(pipa_transmisi_foto)) {
-			if (lpr.pipa_transmisi_foto) {
-				const url = await this.fileService.updateFile(lpr.pipa_transmisi_foto, pipa_transmisi_foto, "laporan")
-				fotoPipaTransmisi = `${this.baseUrl}/uploads/${url}`;
-			} else {
-				fotoPipaTransmisi = await this.createUrlFoto(pipa_transmisi_foto)
-			}
-		} else {
-			fotoPipaTransmisi = pipa_transmisi_foto
-		}
-
-		let fotoPipaDistribusi = ""
-		if (this.normalizePath(lpr.pipa_distribusi_foto) !== this.normalizePath(pipa_distribusi_foto)) {
-			if (lpr.pipa_distribusi_foto) {
-				const url = await this.fileService.updateFile(lpr.pipa_distribusi_foto, pipa_distribusi_foto, "laporan")
-				fotoPipaDistribusi = `${this.baseUrl}/uploads/${url}`;
-			} else {
-				fotoPipaDistribusi = await this.createUrlFoto(pipa_distribusi_foto)
-			}
-		} else {
-			fotoPipaDistribusi = pipa_distribusi_foto
-		}
+		const fileLaporanData = fileLaporan
+			? await Promise.all(
+				fileLaporan.map(async (fl) => ({
+				  where: { id: fl.id ?? 0 }, // Jika ID ada, update; jika tidak, buat baru
+				  update: fl.file
+					? { type: fl.type, file: await this.createUrlFoto(fl.file) } // 🔥 Simpan file baru jika Base64 dikirim
+					: {},
+				  create: { type: fl.type, file: await this.createUrlFoto(fl.file) }
+				}))
+			  )
+			: undefined;
 
 		const updLaporan = await this.dbService.laporan.update({
 			where: {
@@ -223,29 +195,22 @@ export class LaporanService {
 				sr_aktif,
 				intake,
 				intake_ket,
-				intake_foto: fotoIntake,
 				wtp,
 				wtp_ket,
-				wtp_foto: fotoWtp,
 				panel_intake,
 				panel_intake_ket,
-				panel_intake_foto: fotoPanelIntake,
 				panel_distribusi,
 				panel_distribusi_ket,
-				panel_distribusi_foto: fotoPanelDistribusi,
 				pompa_intake,
 				pompa_intake_ket,
-				pompa_intake_foto: fotoPompaIntake,
 				pompa_distribusi,
 				pompa_distribusi_ket,
-				pompa_distribusi_foto: fotoPompaDistribusi,
 				pipa_transmisi,
 				pipa_transmisi_ket,
-				pipa_transmisi_foto: fotoPipaTransmisi,
 				pipa_distribusi,
 				pipa_distribusi_ket,
-				pipa_distribusi_foto: fotoPipaDistribusi,
-				spamId
+				spamId,
+				fileLaporan: fileLaporanData ? { upsert: fileLaporanData } : undefined
 			}
 		})
 		if (!updLaporan) 'Gagal mengedit data'
