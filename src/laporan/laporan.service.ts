@@ -221,13 +221,16 @@ export class LaporanService {
 	}
 
 	async deleteLaporan(id: number): Promise<string> {
-		const delLaporan = await this.dbService.laporan.delete({
-			where: {
-				id: +id
-			}
-		})
-		if (!delLaporan) 'Gagal menghapus data'
-		return null
+		try {
+		  await this.dbService.$transaction([
+			this.dbService.fileLaporan.deleteMany({ where: { laporanId: +id } }), // Hapus file laporan terkait
+			this.dbService.laporan.delete({ where: { id: +id } }) // Hapus laporan utama
+		  ]);
+	  
+		  	return 'Berhasil menghapus laporan dan file terkait';
+		} catch (error) {
+		  	return 'Gagal menghapus data';
+		}
 	}
 
 	async createLaporanAdministrasi(administrasiDto: AdministrasiDto): Promise<string>  {
