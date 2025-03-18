@@ -41,11 +41,12 @@ export class LaporanService {
 
 		const laporanWithDirectFiles = laporan.map(lap => {
 			const groupedFiles = lap.fileLaporan.reduce((acc, file) => {
-			  if (!acc[file.type]) {
-				acc[file.type] = []; // Buat array baru jika belum ada
-			  }
-			  acc[file.type].push(file); // Tambahkan file ke dalam grup yang sesuai
-			  return acc;
+				const key = `${file.type}_file`; // Ubah key menjadi "type_file"  
+				if (!acc[key]) {
+				  acc[key] = []; // Buat array baru jika belum ada
+				}
+				acc[key].push(file); // Simpan objek file lengkap
+				return acc;
 			}, {} as Record<string, typeof lap.fileLaporan>);
 		  
 			return {
@@ -71,11 +72,12 @@ export class LaporanService {
 
 		const laporanWithDirectFiles = laporan.map(lap => {
 			const groupedFiles = lap.fileLaporan.reduce((acc, file) => {
-			  if (!acc[file.type]) {
-				acc[file.type] = []; // Buat array baru jika belum ada
-			  }
-			  acc[file.type].push(file); // Tambahkan file ke dalam grup yang sesuai
-			  return acc;
+				const key = `${file.type}_file`; // Ubah key menjadi "type_file"  
+				if (!acc[key]) {
+				  acc[key] = []; // Buat array baru jika belum ada
+				}
+				acc[key].push(file); // Simpan objek file lengkap
+				return acc;
 			}, {} as Record<string, typeof lap.fileLaporan>);
 		  
 			return {
@@ -100,11 +102,12 @@ export class LaporanService {
 		})
 
 		const groupedFiles = laporan.fileLaporan.reduce((acc, file) => {
-		  if (!acc[file.type]) {
-			acc[file.type] = []; // Buat array baru jika belum ada
-		  }
-		  acc[file.type].push(file); // Tambahkan file ke dalam grup yang sesuai
-		  return acc;
+			const key = `${file.type}_file`; // Ubah key menjadi "type_file"  
+			if (!acc[key]) {
+			  acc[key] = []; // Buat array baru jika belum ada
+			}
+			acc[key].push(file); // Simpan objek file lengkap
+			return acc;
 		}, {} as Record<string, typeof laporan.fileLaporan>);
 		
 		if (!laporan) return null
