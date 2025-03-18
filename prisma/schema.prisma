@@ -201,6 +201,7 @@ model Laporan {
   spam                  Spam?       @relation(fields: [spamId], references: [id])
   spamId                Int?
   fileLaporan           FileLaporan[]
+  riwayatStatus          RiwayatStatus[]
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @default(now())
 }
@@ -209,6 +210,15 @@ model FileLaporan {
   id                    Int              @default(autoincrement()) @id
   type                  TypeFile?
   file                  String?
+  laporanId             Int
+  laporan               Laporan          @relation(fields: [laporanId], references:[id])
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @default(now())
+}
+
+model RiwayatStatus {
+  id                    Int              @default(autoincrement()) @id
+  type                  TypeFile?
   laporanId             Int
   laporan               Laporan          @relation(fields: [laporanId], references:[id])
   createdAt             DateTime         @default(now())

@@ -5,6 +5,7 @@ import { AdministrasiDto } from './dto/adminstrasi.dto'
 import { Response } from 'express'
 import { JwtGuard } from 'src/guard/jwt.guard'
 import { AppService } from 'src/app.service'
+import { StatusDto } from './dto/status.dto'
 
 @Controller('v1/api/laporan')
 export class LaporanController {
@@ -26,10 +27,22 @@ export class LaporanController {
 	}
 
 	@UseGuards(JwtGuard)
-	@Get('/spam/:id')
-	async laporanBySpam(@Param('id') id: number, @Res() res: Response) {
+	@Get('/rekap')
+	async Rekap(@Query('tahun') tahun: string, @Query('kategori') kategori: string, @Res() res: Response) {
 		try {
-			const news = await this.laporanService.findLaporanBySpam(id)
+			const news = await this.laporanService.findRekap(tahun, kategori)
+			if (!news) return this.appService.responseError(res, 400, 'data tidak ditemukan');
+			return this.appService.responseSuccess(res, HttpStatus.OK, news);
+		} catch (error) {
+			return this.appService.responseError(res, 400, error);
+		}
+	}
+
+	@UseGuards(JwtGuard)
+	@Get('/spam/:id')
+	async laporanBySpam(@Param('id') id: number, @Query('tahun') tahun: string, @Res() res: Response) {
+		try {
+			const news = await this.laporanService.findLaporanBySpam(id, tahun)
 			if (!news) return this.appService.responseError(res, 400, 'data tidak ditemukan');
 			return this.appService.responseSuccess(res, HttpStatus.OK, news);
 		} catch (error) {
@@ -66,6 +79,18 @@ export class LaporanController {
 	async laporanUpdate(@Param('id') id: number, @Body() laporanDto: LaporanDto, @Res() res: Response) {
 		try {
 			const errMsg = await this.laporanService.updateLaporan(id, laporanDto)
+			if (!errMsg) return this.appService.responseSuccess(res, HttpStatus.OK, 'Berhasil mengedit data');
+			return this.appService.responseError(res, 400, errMsg);
+		} catch (error) {
+			return this.appService.responseError(res, 400, error);
+		}
+	}
+
+	@UseGuards(JwtGuard)
+	@Put('/:id/status')
+	async editStatusLaporan(@Param('id') id: number, @Body() statusDto: StatusDto, @Res() res: Response) {
+		try {
+			const errMsg = await this.laporanService.editStatus(id, statusDto)
 			if (!errMsg) return this.appService.responseSuccess(res, HttpStatus.OK, 'Berhasil mengedit data');
 			return this.appService.responseError(res, 400, errMsg);
 		} catch (error) {

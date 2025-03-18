@@ -5,6 +5,7 @@ import { AdministrasiDto } from './dto/adminstrasi.dto'
 import { News } from '@prisma/client'
 import { FileService } from 'src/file/file.service'
 import * as path from 'path';
+import { StatusDto, TypeLaporan } from './dto/status.dto'
 
 @Injectable()
 export class LaporanService {
@@ -29,13 +30,74 @@ export class LaporanService {
 		return path.normalize(url.replace(/\\/g, '/'));
 	}
 
+	async buatRekap(laporan: any[], kategoriFilter: string): Promise<{ bulan: number; baik: number; rusak: number }[]> {
+		const rekap: Record<number, { bulan: number, baik: number, rusak: number }> = {};
+		for (let i = 1; i <= 12; i++) {
+		  rekap[i] = { bulan: i, baik: 0, rusak: 0 };
+		}
+		laporan.forEach(lap => {
+		  const bulan = parseInt(lap.bulan.split("-")[1]); // Ambil angka bulan dari "YYYY-MM"
+	  
+		  if (lap[kategoriFilter]) { // Hanya cek kategori yang dipilih
+			if (lap[kategoriFilter].includes("BAIK")) {
+			  rekap[bulan].baik += 1;
+			} else if (lap[kategoriFilter].includes("RUSAK")) {
+			  rekap[bulan].rusak += 1;
+			}
+		  }
+		});
+		return Object.values(rekap);
+	}
+
+	async getTotalSr(tahun: string): Promise<{total_jumlah_sr: number, total_sr_aktif: number}> {
+		const total = await this.dbService.laporan.aggregate({
+			where: {
+			  ...(tahun && { bulan: { startsWith: tahun } })
+			},
+			_sum: {
+			  jumlah_sr: true,
+			  sr_aktif: true
+			}
+		});
+		return {
+			total_jumlah_sr: Number(total._sum.jumlah_sr) || 0,
+			total_sr_aktif: Number(total._sum.sr_aktif) || 0
+		};
+	}
+
+	async findRekap(tahun?: string, kategori?: string): Promise<object> {
+		const laporan = await this.dbService.laporan.findMany({
+			where: {
+				...(tahun && { bulan: { startsWith: tahun } })
+			},
+			include: {
+				fileLaporan: true
+			}
+		})
+		const mapRekap = await this.buatRekap(laporan, kategori)
+		const totalSr = await this.getTotalSr(tahun)
+
+		const totalSpam = await this.dbService.spam.count({
+			where: {
+			  deletedAt: null
+			}
+		});
+
+		return {
+			rekap: mapRekap,
+			sr: totalSr,
+			total_spam: totalSpam
+		}
+	}
+
 	async findAllLaporan(): Promise<object> {
 		const laporan = await this.dbService.laporan.findMany({
 			orderBy: {
 				createdAt: 'asc'
 			},
 			include: {
-				fileLaporan: true
+				fileLaporan: true,
+				riwayatStatus: true
 			}
 		})
 
@@ -48,11 +110,26 @@ export class LaporanService {
 				acc[key].push(file); // Simpan objek file lengkap
 				return acc;
 			}, {} as Record<string, typeof lap.fileLaporan>);
+
+			// Mendapatkan tanggal perbaikan terakhir berdasarkan kategori dari TypeLaporan
+			const lastRepairDates = Object.values(TypeLaporan).reduce<Record<string, string | null>>(
+				(acc, category) => {
+					  const lastEntry = lap.riwayatStatus
+						.filter(status => status.type === category)
+						.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+			  
+					acc[`tgl_perbaiki_${category}`] = lastEntry ? new Date(lastEntry.createdAt).toISOString() : null;
+					  return acc;
+				},
+				{} // Pastikan objek awal sesuai dengan tipe `Record<string, string | null>`
+			);
 		  
 			return {
-			  ...lap,
-			  ...groupedFiles, // Gabungkan hasil grouping ke dalam objek laporan langsung
-			  fileLaporan: undefined // Hilangkan properti fileLaporan lama
+				...lap,
+				...groupedFiles, // Gabungkan hasil grouping file
+				...lastRepairDates, // Gabungkan hasil tanggal perbaikan
+				fileLaporan: undefined, // Hilangkan properti fileLaporan lama
+				riwayatStatus: undefined // Hilangkan properti riwayatStatus lama
 			};
 		});
 
@@ -60,36 +137,57 @@ export class LaporanService {
 		return laporanWithDirectFiles
 	}
 
-	async findLaporanBySpam(id: number): Promise<object> {
+	async findLaporanBySpam(id: number, tahun?: string): Promise<object> {
 		const laporan = await this.dbService.laporan.findMany({
-			where: {
-				spamId: +id
-			},
-			include: {
-				fileLaporan: true
-			}
-		})
-
-		const laporanWithDirectFiles = laporan.map(lap => {
-			const groupedFiles = lap.fileLaporan.reduce((acc, file) => {
-				const key = `${file.type}_file`; // Ubah key menjadi "type_file"  
-				if (!acc[key]) {
-				  acc[key] = []; // Buat array baru jika belum ada
-				}
-				acc[key].push(file); // Simpan objek file lengkap
-				return acc;
-			}, {} as Record<string, typeof lap.fileLaporan>);
-		  
-			return {
-			  ...lap,
-			  ...groupedFiles, // Gabungkan hasil grouping ke dalam objek laporan langsung
-			  fileLaporan: undefined // Hilangkan properti fileLaporan lama
-			};
+		  where: {
+			spamId: +id,
+			...(tahun && { bulan: { startsWith: tahun } })
+		  },
+		  include: {
+			fileLaporan: true,
+			riwayatStatus: true
+		  }
 		});
-
-		if (!laporan) return null
-		return laporanWithDirectFiles
+	  
+		if (!laporan) return null;
+	  
+		const laporanWithFilesAndDates = laporan.map(lap => {
+		  // Grouping file berdasarkan kategori
+		  const groupedFiles = lap.fileLaporan.reduce((acc, file) => {
+			const key = `${file.type}_file`; // Ubah key menjadi "type_file"
+			if (!acc[key]) {
+			  acc[key] = [];
+			}
+			acc[key].push(file);
+			return acc;
+		  }, {} as Record<string, typeof lap.fileLaporan>);
+	  
+		  // Mendapatkan tanggal perbaikan terakhir berdasarkan kategori dari TypeLaporan
+		  const lastRepairDates = Object.values(TypeLaporan).reduce<Record<string, string | null>>(
+			(acc, category) => {
+			  	const lastEntry = lap.riwayatStatus
+					.filter(status => status.type === category)
+					.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+		  
+				acc[`tgl_perbaiki_${category}`] = lastEntry ? new Date(lastEntry.createdAt).toISOString() : null;
+			  	return acc;
+			},
+			{} // Pastikan objek awal sesuai dengan tipe `Record<string, string | null>`
+		  );
+		  
+	  
+		  return {
+			...lap,
+			...groupedFiles, // Gabungkan hasil grouping file
+			...lastRepairDates, // Gabungkan hasil tanggal perbaikan
+			fileLaporan: undefined, // Hilangkan properti fileLaporan lama
+			riwayatStatus: undefined // Hilangkan properti riwayatStatus lama
+		  };
+		});
+	  
+		return laporanWithFilesAndDates;
 	}
+	  
 
 	async findLaporanById(id: number): Promise<object> {
 		const laporan = await this.dbService.laporan.findUnique({
@@ -97,7 +195,8 @@ export class LaporanService {
 				id: +id
 			},
 			include: {
-				fileLaporan: true
+				fileLaporan: true,
+				riwayatStatus: true
 			}
 		})
 
@@ -109,12 +208,26 @@ export class LaporanService {
 			acc[key].push(file); // Simpan objek file lengkap
 			return acc;
 		}, {} as Record<string, typeof laporan.fileLaporan>);
+
+		const lastRepairDates = Object.values(TypeLaporan).reduce<Record<string, string | null>>(
+			(acc, category) => {
+			  	const lastEntry = laporan.riwayatStatus
+					.filter(status => status.type === category)
+					.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+		  
+				acc[`tgl_perbaiki_${category}`] = lastEntry ? new Date(lastEntry.createdAt).toISOString() : null;
+			  	return acc;
+			},
+			{} // Pastikan objek awal sesuai dengan tipe `Record<string, string | null>`
+		);
 		
 		if (!laporan) return null
 		return {
 			...laporan,
-			...groupedFiles, // Gabungkan hasil grouping
-			fileLaporan: undefined // Hilangkan properti lama agar lebih rapi
+			...groupedFiles, // Gabungkan hasil grouping file
+			...lastRepairDates, // Gabungkan hasil tanggal perbaikan
+			fileLaporan: undefined, // Hilangkan properti fileLaporan lama
+			riwayatStatus: undefined // Hilangkan properti riwayatStatus lama
 		};
 	}
 
@@ -220,14 +333,46 @@ export class LaporanService {
 		return null
 	}
 
+	async editStatus(id: number, statusDto: StatusDto): Promise<string> {
+		const { kategori, status } = statusDto
+		const allowedKategori = [
+			"intake", "wtp", "panel_intake", "panel_distribusi",
+			"pompa_intake", "pompa_distribusi", "pipa_transmisi", "pipa_distribusi"
+		];
+	
+		if (!allowedKategori.includes(kategori)) {
+			return "Kategori tidak valid";
+		}
+	
+		const dataToUpdate = {
+			[kategori]: status
+		};
+		const updLaporan = await this.dbService.laporan.update({
+			where: {
+				id: +id
+			},
+			data: dataToUpdate
+		});
+
+		
+		if (!updLaporan) return "Gagal mengedit data";
+		await this.dbService.riwayatStatus.create({
+			data: {
+				type: kategori,
+				laporanId: +id
+			}
+		})
+		return null;
+	}
+	
+
 	async deleteLaporan(id: number): Promise<string> {
 		try {
 		  await this.dbService.$transaction([
 			this.dbService.fileLaporan.deleteMany({ where: { laporanId: +id } }), // Hapus file laporan terkait
 			this.dbService.laporan.delete({ where: { id: +id } }) // Hapus laporan utama
 		  ]);
-	  
-		  	return 'Berhasil menghapus laporan dan file terkait';
+		  	return null;
 		} catch (error) {
 		  	return 'Gagal menghapus data';
 		}
