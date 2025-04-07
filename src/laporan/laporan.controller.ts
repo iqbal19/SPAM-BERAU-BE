@@ -14,6 +14,17 @@ export class LaporanController {
 		private readonly appService: AppService
 	) {}
 
+	@Get('/list-spam')
+	async laporanSpam(@Res() res: Response) {
+		try {
+			const news = await this.laporanService.findAllSpam()
+			if (!news) return this.appService.responseError(res, 400, 'data tidak ditemukan');
+			return this.appService.responseSuccess(res, HttpStatus.OK, news);
+		} catch (error) {
+			return this.appService.responseError(res, 400, error);
+		}
+	}
+
 	@UseGuards(JwtGuard)
 	@Get()
 	async laporans(@Res() res: Response) {

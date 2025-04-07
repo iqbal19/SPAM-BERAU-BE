@@ -90,6 +90,62 @@ export class LaporanService {
 		}
 	}
 
+	async findAllSpam(): Promise<object> {
+		const laporan = await this.dbService.laporan.findMany({
+			orderBy: {
+				createdAt: 'asc'
+			},
+			include: {
+				fileLaporan: true,
+				riwayatStatus: true,
+				spam: true
+			}
+		})
+
+		const laporanWithDirectFiles = laporan.map(lap => {
+			const groupedFiles = lap.fileLaporan.reduce((acc, file) => {
+				const key = `${file.type}_file`; // Ubah key menjadi "type_file"  
+				if (!acc[key]) {
+				  acc[key] = []; // Buat array baru jika belum ada
+				}
+				acc[key].push(file); // Simpan objek file lengkap
+				return acc;
+			}, {} as Record<string, typeof lap.fileLaporan>);
+
+			// Mendapatkan tanggal perbaikan terakhir berdasarkan kategori dari TypeLaporan
+			const lastRepairDates = Object.values(TypeLaporan).reduce<Record<string, string | null>>(
+				(acc, category) => {
+					  const lastEntry = lap.riwayatStatus
+						.filter(status => status.type === category)
+						.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+			  
+					acc[`tgl_perbaiki_${category}`] = lastEntry ? new Date(lastEntry.createdAt).toISOString() : null;
+					  return acc;
+				},
+				{} // Pastikan objek awal sesuai dengan tipe `Record<string, string | null>`
+			);
+		  
+			return {
+				spam: {
+					nama: lap.spam?.nama,
+					lat: lap.spam?.lat,
+					long: lap.spam?.long
+				},
+				laporan: {
+					...lap,
+					...groupedFiles, // Gabungkan hasil grouping file
+					...lastRepairDates, // Gabungkan hasil tanggal perbaikan
+					fileLaporan: undefined, // Hilangkan properti fileLaporan lama
+					riwayatStatus: undefined, // Hilangkan properti riwayatStatus lama
+					spam: undefined
+				}
+			};
+		});
+
+		if (!laporan) return null
+		return laporanWithDirectFiles
+	}
+
 	async findAllLaporan(): Promise<object> {
 		const laporan = await this.dbService.laporan.findMany({
 			orderBy: {
