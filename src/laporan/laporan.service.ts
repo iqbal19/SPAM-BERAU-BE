@@ -127,6 +127,7 @@ export class LaporanService {
 		  
 			return {
 				spam: {
+					id: lap.spam?.id,
 					nama: lap.spam?.nama,
 					lat: lap.spam?.lat,
 					long: lap.spam?.long
