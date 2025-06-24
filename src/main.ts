@@ -5,7 +5,7 @@ import * as bodyParser from 'body-parser';
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule)
 	app.enableCors({
-    origin: ['http://localhost:5173', 'https://fe.luminos.my.id'], // or the frontend URL
+    origin: ['http://localhost:5173', 'https://fe.luminos.my.id', 'https://fe.spamberau.id'], // or the frontend URL
     methods: 'GET,POST,PUT,DELETE, PATCH',
   });
   app.use(bodyParser.json({ limit: '20mb' }));
